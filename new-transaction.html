@@ -18,13 +18,13 @@
         </a>
 
         <nav class="sidebar-nav">
-          <a class="sidebar-link" href="dashboard.html">Dashboard</a>
-          <a class="sidebar-link" href="transactions.html">Transaksi</a>
-          <a class="sidebar-link is-active" href="new-transaction.html">Tambah Transaksi</a>
-          <a class="sidebar-link" href="settings.html">Pengaturan</a>
+          <a class="sidebar-link" href="dashboard.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>Dashboard</a>
+          <a class="sidebar-link" href="transactions.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l4 4-4 4"></path><path d="M20 7H4"></path><path d="M8 21l-4-4 4-4"></path><path d="M4 17h16"></path></svg>Transaksi</a>
+          <a class="sidebar-link is-active" href="new-transaction.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Tambah Transaksi</a>
+          <a class="sidebar-link" href="settings.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>Pengaturan</a>
         </nav>
 
-        <a class="sidebar-exit" href="index.html">Keluar</a>
+        <a class="sidebar-exit" href="index.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>Keluar</a>
       </aside>
 
       <main class="app-main">
@@ -39,51 +39,65 @@
           <h2>Detail Transaksi</h2>
           <p>Isi Informasi Lengkap Transaksi Anda</p>
 
-          <form class="form-grid">
+          <form class="form-grid" id="newTransactionForm">
             <label>
               <span>Tipe Transaksi</span>
-              <select class="select-shell">
-                <option>Pilih Tipe Transaksi</option>
-                <option>Pemasukan</option>
-                <option>Pengeluaran</option>
-              </select>
+              <div class="input-shell">
+                <span class="input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg></span>
+                <select class="select-shell--inner" id="newTransactionType" required>
+                  <option value="">Pilih Tipe Transaksi</option>
+                  <option value="Pemasukan">Pemasukan</option>
+                  <option value="Pengeluaran">Pengeluaran</option>
+                </select>
+              </div>
             </label>
 
             <label>
               <span>Kategori</span>
-              <select class="select-shell">
-                <option>Pilih Kategori</option>
-                <option>Gaji</option>
-                <option>Makanan</option>
-                <option>Transportasi</option>
-                <option>Tagihan</option>
-              </select>
+              <div class="input-shell">
+                <span class="input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg></span>
+                <select class="select-shell--inner" id="newTransactionCategory" required>
+                  <option value="">Pilih Kategori</option>
+                  <option value="Gaji">Gaji</option>
+                  <option value="Bonus">Bonus</option>
+                  <option value="Investasi">Investasi</option>
+                  <option value="Belanja">Belanja</option>
+                  <option value="Makanan">Makanan</option>
+                  <option value="Liburan">Liburan</option>
+                  <option value="Kesehatan">Kesehatan</option>
+                  <option value="Transportasi">Transportasi</option>
+                  <option value="Tagihan">Tagihan</option>
+                </select>
+              </div>
             </label>
 
             <label>
               <span>Nominal</span>
               <div class="input-shell">
-                <span class="input-icon">💸</span>
-                <input type="text" placeholder="Masukan Nominal" />
+                <span class="input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg></span>
+                <input id="newTransactionAmount" type="text" inputmode="numeric" placeholder="Masukan Nominal" required />
               </div>
             </label>
 
             <label>
               <span>Tanggal</span>
               <div class="input-shell">
-                <span class="input-icon">🗓</span>
-                <input type="text" value="14 Maret 2026" />
+                <span class="input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
+                <input id="newTransactionDate" type="date" required />
               </div>
             </label>
 
             <label class="form-grid__full">
               <span>Catatan</span>
-              <textarea placeholder="Tambahkan Catatan Atau Deskripsi Transaksi Anda (Opsional)"></textarea>
+              <div class="input-shell input-shell--textarea">
+                <span class="input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></span>
+                <textarea id="newTransactionNote" placeholder="Tambahkan Catatan Atau Deskripsi Transaksi Anda (Opsional)" rows="4"></textarea>
+              </div>
             </label>
 
             <div class="form-actions">
-              <button class="button button--muted" type="button">Batal</button>
-              <button class="button button--success" type="submit">Simpan Transaksi</button>
+              <button class="button button--muted" id="cancelTransactionButton" type="button">Batal</button>
+              <button class="button button--success" type="submit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>Simpan Transaksi</button>
             </div>
           </form>
         </section>
