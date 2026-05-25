@@ -29,6 +29,7 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: var(--anchor-offset);
+  font-size: 95%;
 }
 
 section[id],
@@ -80,10 +81,10 @@ textarea {
 .auth-card__body h1 {
   margin: 0;
   font-family: var(--title-font);
-  font-size: clamp(2.2rem, 5vw, 5rem);
-  line-height: 0.96;
-  font-weight: 900;
-  letter-spacing: -0.05em;
+  font-size: clamp(1.8rem, 4vw, 3.2rem);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .section-heading p,
@@ -523,7 +524,8 @@ textarea {
 .auth-page {
   min-height: 100vh;
   background: #f7f7f8;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .auth-page::before,
@@ -555,7 +557,7 @@ textarea {
   display: grid;
   place-items: center;
   min-height: 100vh;
-  padding: 40px 20px;
+  padding: 24px 16px;
 }
 
 .auth-card {
@@ -575,13 +577,13 @@ textarea {
   color: #fff;
   text-align: center;
   font-family: var(--title-font);
-  font-size: clamp(2rem, 6vw, 4rem);
-  font-weight: 900;
-  letter-spacing: -0.05em;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .auth-card__body {
-  padding: 36px 56px 44px;
+  padding: 24px 32px 32px;
 }
 
 .auth-card__body h1 {
@@ -622,7 +624,7 @@ textarea {
 
 .input-shell {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 14px;
   padding: 18px 22px;
@@ -645,6 +647,22 @@ textarea {
   background: transparent;
   color: #0f172a;
   outline: none;
+}
+
+.password-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.password-toggle:hover {
+  color: #0f172a;
 }
 
 .input-shell--textarea {
