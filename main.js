@@ -150,16 +150,25 @@ function sortTransactions(items) {
 function getStoredTransactions() {
   const savedTransactions = readStoredJson(TRANSACTIONS_KEY, null);
   const sourceTransactions = Array.isArray(savedTransactions) ? savedTransactions : defaultTransactions;
-  return sortTransactions(
-    sourceTransactions.map((item) => {
-      const dateLabel = `${item.subtitle || ""}`.split(" - ").pop();
-      const parsedDate = parseIndonesianDateLabel(dateLabel);
-      return {
-        ...item,
-        timestamp: item.timestamp || (parsedDate ? parsedDate.toISOString() : new Date().toISOString())
-      };
-    })
-  );
+  
+  let hasChanges = false;
+  const processed = sourceTransactions.map((item) => {
+    const dateLabel = `${item.subtitle || ""}`.split(" - ").pop();
+    const parsedDate = parseIndonesianDateLabel(dateLabel);
+    if (!item.id || !item.timestamp) hasChanges = true;
+    
+    return {
+      ...item,
+      id: item.id || crypto.randomUUID(),
+      timestamp: item.timestamp || (parsedDate ? parsedDate.toISOString() : new Date().toISOString())
+    };
+  });
+
+  const sorted = sortTransactions(processed);
+  if (hasChanges && sourceTransactions.length > 0) {
+    writeStoredJson(TRANSACTIONS_KEY, sorted);
+  }
+  return sorted;
 }
 
 function saveTransactions(nextTransactions) {
@@ -288,6 +297,91 @@ function initDeleteAccountModal() {
   backButton.addEventListener("click", closeAndExit);
 }
 
+function renderTransactionDetail() {
+  if (getCurrentPage() !== "transaction-detail") return;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const txId = urlParams.get("id");
+  if (!txId) return;
+
+  const tx = transactions.find((t) => t.id === txId);
+  if (!tx) return;
+
+  const isIncome = tx.amount > 0;
+  
+  const banner = document.querySelector(".transaction-detail-banner");
+  const bannerIcon = document.querySelector(".banner-icon");
+  const badge = document.querySelector(".banner-info .badge");
+  const title = document.querySelector(".banner-info h2");
+  const subtitle = document.querySelector(".banner-info p");
+  const amount = document.querySelector(".banner-amount strong");
+
+  const infoType = document.querySelectorAll(".info-text strong")[0];
+  const infoCategory = document.querySelectorAll(".info-text strong")[1];
+  const infoDate = document.querySelectorAll(".info-text strong")[2];
+  const infoAmount = document.querySelectorAll(".info-text strong")[3];
+  
+  const typeIcon = document.querySelectorAll(".info-icon")[0];
+  const noteBox = document.querySelector(".note-box");
+
+  if (banner) {
+    banner.className = `transaction-detail-banner ${isIncome ? "transaction-detail-banner--income" : "transaction-detail-banner--expense"}`;
+    bannerIcon.innerHTML = isIncome 
+      ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>'
+      : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline><polyline points="16 17 22 17 22 11"></polyline></svg>';
+    badge.textContent = tx.type;
+    title.textContent = tx.title;
+    subtitle.textContent = tx.category;
+    amount.textContent = formatCurrency(tx.amount);
+  }
+
+  if (infoType) infoType.textContent = tx.type;
+  if (infoCategory) infoCategory.textContent = tx.category;
+  if (infoDate) infoDate.textContent = tx.date ? formatLongDate(tx.date) : (tx.subtitle.split(" - ")[1] || "-");
+  if (infoAmount) {
+    infoAmount.textContent = formatCurrency(tx.amount);
+    infoAmount.className = isIncome ? "income" : "expense";
+  }
+
+  if (typeIcon) {
+    typeIcon.className = `info-icon ${isIncome ? "info-icon--green" : "info-icon--red"}`;
+    typeIcon.innerHTML = isIncome 
+      ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>'
+      : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline><polyline points="16 17 22 17 22 11"></polyline></svg>';
+  }
+
+  if (noteBox) noteBox.textContent = tx.note || "-";
+}
+
+function initDeleteTransactionModal() {
+  const triggerButton = document.getElementById("deleteTransactionButton");
+  const modal = document.getElementById("deleteTransactionModal");
+  const backButton = document.getElementById("deleteTransactionBackButton");
+  if (!triggerButton || !modal || !backButton) return;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const txId = urlParams.get("id");
+
+  const openModal = () => {
+    if (txId) {
+      const nextTransactions = transactions.filter(t => t.id !== txId);
+      saveTransactions(nextTransactions);
+    }
+    
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+  };
+
+  const closeAndExit = () => {
+    document.body.classList.remove("modal-open");
+    modal.hidden = true;
+    redirectTo("transactions.html");
+  };
+
+  triggerButton.addEventListener("click", openModal);
+  backButton.addEventListener("click", closeAndExit);
+}
+
 function initPasswordToggles() {
   const toggles = document.querySelectorAll(".password-toggle");
   toggles.forEach((btn) => {
@@ -343,6 +437,16 @@ function hydrateUserProfile(session) {
   const editEmailInput = document.getElementById("editEmailInput");
   if (editEmailInput) {
     editEmailInput.value = session.email;
+  }
+
+  const settingsPhoneInput = document.getElementById("settingsPhoneInput");
+  if (settingsPhoneInput && session.phone) {
+    settingsPhoneInput.value = session.phone;
+  }
+
+  const editPhoneInput = document.getElementById("editPhoneInput");
+  if (editPhoneInput && session.phone) {
+    editPhoneInput.value = session.phone;
   }
 
   const profileAvatar = document.querySelector(".profile-avatar");
@@ -493,14 +597,14 @@ function renderTransactionItem(item) {
   const isIncome = item.amount > 0;
   const icon = isIncome ? "↗" : "↘";
   return `
-    <article class="transaction-item" data-type="${item.type}" data-category="${item.category}" data-amount="${item.amount}">
+    <a href="transaction-detail.html?id=${item.id}" class="transaction-item" data-type="${item.type}" data-category="${item.category}" data-amount="${item.amount}">
       <div class="transaction-item__icon ${isIncome ? "transaction-item__icon--income" : "transaction-item__icon--expense"}">${icon}</div>
       <div>
         <h3>${item.title}</h3>
         <p>${item.subtitle}</p>
       </div>
       <strong class="${isIncome ? "income" : "expense"}">${formatCurrency(item.amount)}</strong>
-    </article>
+    </a>
   `;
 }
 
@@ -760,24 +864,103 @@ function initRecoveryForms() {
   }
 }
 
+function showToast(message, type = "success") {
+  const toast = document.createElement("div");
+  toast.className = `toast toast--${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => toast.classList.add("show"), 10);
+  
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
 function initEditProfileForm(session) {
   if (!session) return;
   const saveButton = document.getElementById("saveProfileChanges");
   const nameInput = document.getElementById("editNameInput");
   const emailInput = document.getElementById("editEmailInput");
+  const phoneInput = document.getElementById("editPhoneInput");
+  const verifyPhoneBtn = document.getElementById("verifyPhoneBtn");
+  const otpContainer = document.getElementById("otpContainer");
+  const confirmOtpBtn = document.getElementById("confirmOtpBtn");
+  const otpInput = document.getElementById("otpInput");
+
+  let isPhoneVerified = false;
+
+  if (phoneInput && verifyPhoneBtn) {
+    const toggleVerifyBtn = () => {
+      if (isPhoneVerified) {
+        verifyPhoneBtn.style.display = "block";
+        verifyPhoneBtn.textContent = "Terverifikasi";
+        verifyPhoneBtn.disabled = true;
+        verifyPhoneBtn.style.background = "#10b981";
+      } else {
+        verifyPhoneBtn.style.display = phoneInput.value.trim() ? "block" : "none";
+        verifyPhoneBtn.textContent = "Verifikasi";
+        verifyPhoneBtn.disabled = false;
+        verifyPhoneBtn.style.background = "";
+      }
+    };
+    phoneInput.addEventListener("input", () => {
+      isPhoneVerified = false; // Reset verification on edit
+      if (otpContainer) otpContainer.style.display = "none";
+      toggleVerifyBtn();
+    });
+    toggleVerifyBtn();
+
+    verifyPhoneBtn.addEventListener("click", () => {
+      if (phoneInput.value.trim()) {
+        showToast(`Kode OTP telah dikirim ke nomor ${phoneInput.value.trim()}`);
+        if (otpContainer) {
+          otpContainer.style.display = "grid";
+          if (otpInput) otpInput.value = ""; // Clear previous OTP
+        }
+      }
+    });
+
+    if (confirmOtpBtn && otpInput) {
+      confirmOtpBtn.addEventListener("click", () => {
+        if (otpInput.value.trim().length >= 4) {
+          showToast("Nomor telepon berhasil diverifikasi!");
+          otpContainer.style.display = "none";
+          isPhoneVerified = true;
+          toggleVerifyBtn();
+          
+          // Save immediately upon successful verification
+          session.phone = phoneInput.value.trim();
+          writeStoredSession(JSON.stringify(session));
+        } else {
+          showToast("Kode OTP tidak valid", "error");
+        }
+      });
+    }
+  }
 
   if (saveButton && nameInput && emailInput) {
     saveButton.addEventListener("click", () => {
       const newName = nameInput.value.trim();
       const newEmail = emailInput.value.trim();
+      const newPhone = phoneInput ? phoneInput.value.trim() : "";
 
       if (!newName || !newEmail) {
         window.alert("Nama dan Email tidak boleh kosong.");
         return;
       }
 
+      if (newPhone && newPhone !== session.phone && !isPhoneVerified) {
+        window.alert("Silakan verifikasi nomor telepon baru Anda terlebih dahulu sebelum menyimpan.");
+        return;
+      }
+
       session.name = newName;
       session.email = newEmail;
+      if (newPhone !== undefined) {
+        session.phone = newPhone;
+      }
       
       writeStoredSession(JSON.stringify(session));
       redirectTo("settings.html");
@@ -829,6 +1012,7 @@ function initNewTransactionForm() {
 
     const formattedDate = formatLongDate(dateValue);
     const transaction = {
+      id: crypto.randomUUID(),
       title: buildTransactionTitle({ type, category, note, dateLabel: formattedDate }),
       subtitle: `${category} - ${formattedDate}`,
       amount: type === "Pengeluaran" ? -amount : amount,
@@ -842,6 +1026,32 @@ function initNewTransactionForm() {
     saveTransactions([transaction, ...transactions]);
     redirectTo("dashboard.html");
   });
+}
+
+function showImageModal(imageUrl) {
+  const modal = document.createElement("div");
+  modal.className = "image-modal";
+  modal.innerHTML = `
+    <div class="image-modal__backdrop"></div>
+    <div class="image-modal__content">
+      <button class="image-modal__close" type="button">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+      <img src="${imageUrl}" alt="Full Profile Photo" />
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const backdrop = modal.querySelector(".image-modal__backdrop");
+  const closeBtn = modal.querySelector(".image-modal__close");
+
+  const closeModal = () => {
+    modal.classList.add("closing");
+    setTimeout(() => modal.remove(), 300);
+  };
+
+  backdrop.addEventListener("click", closeModal);
+  closeBtn.addEventListener("click", closeModal);
 }
 
 function initProfilePhotoPicker(session) {
@@ -865,6 +1075,14 @@ function initProfilePhotoPicker(session) {
 
   button.addEventListener("click", () => {
     fileInput.click();
+  });
+
+  avatar.style.cursor = "pointer";
+  avatar.addEventListener("click", () => {
+    const currentAvatar = readStoredJson(PROFILE_AVATAR_KEY, "");
+    if (currentAvatar) {
+      showImageModal(currentAvatar);
+    }
   });
 
   fileInput.addEventListener("change", () => {
@@ -977,12 +1195,15 @@ document.addEventListener("DOMContentLoaded", () => {
   initRecoveryForms();
   initLogout();
   initDeleteAccountModal();
+  initDeleteTransactionModal();
   hydrateUserProfile(session);
   initProfilePhotoPicker(session);
   initEditProfileForm(session);
   initPasswordToggles();
   initNewTransactionForm();
   initMenu();
+  initCustomSelects();
+  renderTransactionDetail();
   renderAreaChart();
   initAreaChartInteraction();
   renderBarChart();
@@ -994,3 +1215,102 @@ document.addEventListener("DOMContentLoaded", () => {
   renderRecentTransactions();
   initTransactionFilters();
 });
+
+function initCustomSelects() {
+  const selects = document.querySelectorAll("select");
+  selects.forEach((select) => {
+    if (select.nextElementSibling && select.nextElementSibling.classList.contains("custom-select")) return;
+
+    select.style.display = "none";
+    
+    const wrapper = document.createElement("div");
+    wrapper.className = `custom-select ${select.className}`;
+    // keep pill classes if present
+    if (select.classList.contains("filter-select-pill") || select.parentNode.classList.contains("filter-input-pill")) {
+      wrapper.classList.add("custom-select--pill");
+    }
+    
+    const trigger = document.createElement("div");
+    trigger.className = "custom-select__trigger";
+    
+    const triggerContent = document.createElement("div");
+    triggerContent.className = "custom-select__content";
+    
+    if (select.dataset.icon === "funnel" || select.dataset.icon === "type") {
+      const icon = document.createElement("span");
+      icon.className = "input-icon";
+      icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>';
+      icon.style.opacity = "0.6";
+      triggerContent.appendChild(icon);
+    } else if (select.dataset.icon === "tag") {
+      const icon = document.createElement("span");
+      icon.className = "input-icon";
+      icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>';
+      icon.style.opacity = "0.6";
+      triggerContent.appendChild(icon);
+    }
+    
+    const triggerText = document.createElement("span");
+    triggerText.textContent = select.options[select.selectedIndex]?.text || "";
+    triggerContent.appendChild(triggerText);
+    
+    const chevron = document.createElement("div");
+    chevron.className = "custom-select__chevron";
+    chevron.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+
+    trigger.appendChild(triggerContent);
+    trigger.appendChild(chevron);
+    
+    const optionsContainer = document.createElement("div");
+    optionsContainer.className = "custom-select__options";
+    
+    Array.from(select.options).forEach((option) => {
+      const optDiv = document.createElement("div");
+      optDiv.className = "custom-select__option";
+      optDiv.textContent = option.text;
+      if (option.selected) optDiv.classList.add("selected");
+      
+      optDiv.addEventListener("click", (e) => {
+        e.stopPropagation();
+        select.value = option.value;
+        triggerText.textContent = option.text;
+        
+        Array.from(optionsContainer.children).forEach(c => c.classList.remove("selected"));
+        optDiv.classList.add("selected");
+        
+        wrapper.classList.remove("open");
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      
+      optionsContainer.appendChild(optDiv);
+    });
+
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(optionsContainer);
+    
+    select.parentNode.insertBefore(wrapper, select.nextSibling);
+
+    if (select.form) {
+      select.form.addEventListener("reset", () => {
+        setTimeout(() => {
+          triggerText.textContent = select.options[select.selectedIndex]?.text || "";
+          Array.from(optionsContainer.children).forEach((c, idx) => {
+            c.classList.toggle("selected", idx === select.selectedIndex);
+          });
+        }, 0);
+      });
+    }
+
+    trigger.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen = wrapper.classList.contains("open");
+      document.querySelectorAll(".custom-select").forEach(cs => cs.classList.remove("open"));
+      if (!isOpen) wrapper.classList.add("open");
+    });
+  });
+  
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".custom-select").forEach(cs => cs.classList.remove("open"));
+  });
+}
