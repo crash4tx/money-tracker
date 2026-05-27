@@ -1,12 +1,14 @@
 const defaultTransactions = [];
 
 const expenseCategoryPalette = [
-  { label: "Transportasi", color: "#FF3434", iconLabel: "TR" },
-  { label: "Tagihan", color: "#43A8E6", iconLabel: "TG" },
+  { label: "Makanan", color: "#8751ED", iconLabel: "MK" },
+  { label: "Transport", color: "#FF3434", iconLabel: "TR" },
+  { label: "Hiburan", color: "#10C260", iconLabel: "HB" },
   { label: "Belanja", color: "#1653B5", iconLabel: "BL" },
-  { label: "Makan", color: "#8751ED", iconLabel: "MK" },
-  { label: "Liburan", color: "#10C260", iconLabel: "LB" },
-  { label: "Kesehatan", color: "#FF7A21", iconLabel: "KS" }
+  { label: "Tagihan", color: "#43A8E6", iconLabel: "TG" },
+  { label: "Kesehatan", color: "#FF7A21", iconLabel: "KS" },
+  { label: "Pendidikan", color: "#EAB308", iconLabel: "PD" },
+  { label: "Lainnya", color: "#64748b", iconLabel: "LN" }
 ];
 
 const SESSION_KEY = "luxentra_session";
@@ -241,6 +243,51 @@ function initAuthForms() {
 
     const emailInput = form.querySelector('input[type="email"]');
     const textInput = form.querySelector('input[type="text"]');
+    const allInputs = Array.from(form.querySelectorAll('input'));
+    const passwordInput = allInputs.find(i => i.placeholder === "Masukan Password") || form.querySelector('input[type="password"]');
+
+    // Add input event listeners to clear error styles as the user types
+    allInputs.forEach(i => {
+      i.addEventListener("input", () => {
+        const shell = i.closest(".input-shell");
+        if (shell) shell.classList.remove("error");
+      });
+    });
+
+    // Reset error styles on submit
+    allInputs.forEach(i => {
+      const shell = i.closest(".input-shell");
+      if (shell) shell.classList.remove("error");
+    });
+
+    // Check for empty fields
+    let hasEmpty = false;
+    allInputs.forEach(i => {
+      if (!i.value.trim()) {
+        const shell = i.closest(".input-shell");
+        if (shell) {
+          shell.classList.add("error");
+          hasEmpty = true;
+        }
+      }
+    });
+
+    if (hasEmpty) {
+      showToast("Mohon lengkapi semua kolom terlebih dahulu.", "error");
+      return;
+    }
+
+    if (page === "register") {
+      const password = passwordInput?.value || "";
+      const hasUpperCase = /[A-Z]/.test(password);
+      const hasLetter = /[a-zA-Z]/.test(password);
+      const hasNumber = /\d/.test(password);
+
+      if (password.length < 8 || !hasUpperCase || !hasLetter || !hasNumber) {
+        showToast("Password harus memiliki minimal 8 karakter, mengandung huruf, angka, dan minimal 1 huruf besar.", "error");
+        return;
+      }
+    }
 
     createSession({
       email: emailInput?.value,
@@ -504,8 +551,19 @@ function getMonthKey(date) {
 
 function createMonthBuckets(count) {
   const buckets = [];
-  const today = new Date();
-  const normalized = new Date(today.getFullYear(), today.getMonth(), 1);
+  let latestDate = new Date();
+
+  if (typeof transactions !== "undefined" && transactions.length > 0) {
+    transactions.forEach(item => {
+      const timestamp = getTransactionTimestamp(item);
+      if (timestamp) {
+        const d = new Date(timestamp);
+        if (d > latestDate) latestDate = d;
+      }
+    });
+  }
+
+  const normalized = new Date(latestDate.getFullYear(), latestDate.getMonth(), 1);
 
   for (let index = count - 1; index >= 0; index -= 1) {
     const date = new Date(normalized.getFullYear(), normalized.getMonth() - index, 1);
@@ -595,7 +653,9 @@ function getDonutSeries() {
 
 function renderTransactionItem(item) {
   const isIncome = item.amount > 0;
-  const icon = isIncome ? "↗" : "↘";
+  const icon = isIncome
+    ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>'
+    : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline><polyline points="16 17 22 17 22 11"></polyline></svg>';
   return `
     <a href="transaction-detail.html?id=${item.id}" class="transaction-item" data-type="${item.type}" data-category="${item.category}" data-amount="${item.amount}">
       <div class="transaction-item__icon ${isIncome ? "transaction-item__icon--income" : "transaction-item__icon--expense"}">${icon}</div>
@@ -674,18 +734,27 @@ function initAreaChartInteraction() {
   const container = document.getElementById("areaChart");
   if (!panel || !container) return;
 
-  const showIncome = () => {
-    setAreaChartVariant("income");
+  // Make it visually clickable
+  panel.classList.add("panel--link");
+  panel.setAttribute("tabindex", "0");
+  panel.setAttribute("role", "button");
+  panel.setAttribute("aria-label", "Tekan untuk mengganti grafik antara Pemasukan dan Pengeluaran");
+
+  const toggleChart = () => {
+    if (activeAreaVariant === "expense") {
+      setAreaChartVariant("income");
+    } else {
+      setAreaChartVariant("expense");
+    }
   };
 
-  const showExpense = () => {
-    setAreaChartVariant("expense");
-  };
-
-  panel.addEventListener("mouseenter", showIncome);
-  panel.addEventListener("mouseleave", showExpense);
-  panel.addEventListener("focusin", showIncome);
-  panel.addEventListener("focusout", showExpense);
+  panel.addEventListener("click", toggleChart);
+  panel.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggleChart();
+    }
+  });
 }
 
 function renderBarChart() {
@@ -979,6 +1048,30 @@ function initNewTransactionForm() {
   const noteField = document.getElementById("newTransactionNote");
   const cancelButton = document.getElementById("cancelTransactionButton");
 
+  if (typeField && categoryField) {
+    typeField.addEventListener("change", () => {
+      const type = typeField.value;
+      const incomeOptions = ["Gaji", "Freelance", "Investasi", "Bonus", "Lainnya"];
+      const expenseOptions = ["Makanan", "Transport", "Hiburan", "Belanja", "Tagihan", "Kesehatan", "Pendidikan", "Lainnya"];
+
+      categoryField.innerHTML = '<option value="">Pilih kategori</option>';
+      const optionsToUse = type === "Pemasukan" ? incomeOptions : (type === "Pengeluaran" ? expenseOptions : []);
+      
+      optionsToUse.forEach(opt => {
+        const optionEl = document.createElement("option");
+        optionEl.value = opt;
+        optionEl.textContent = opt;
+        categoryField.appendChild(optionEl);
+      });
+
+      if (categoryField.nextElementSibling && categoryField.nextElementSibling.classList.contains("custom-select")) {
+        categoryField.nextElementSibling.remove();
+      }
+      categoryField.style.display = ""; 
+      initCustomSelects();
+    });
+  }
+
   if (dateField && !dateField.value) {
     dateField.value = new Date().toISOString().split("T")[0];
   }
@@ -1265,6 +1358,8 @@ function initCustomSelects() {
     optionsContainer.className = "custom-select__options";
     
     Array.from(select.options).forEach((option) => {
+      if (!option.value) return; // Skip placeholder option
+
       const optDiv = document.createElement("div");
       optDiv.className = "custom-select__option";
       optDiv.textContent = option.text;

@@ -686,6 +686,16 @@ textarea {
   align-items: center;
   gap: 14px;
   padding: 18px 22px;
+  transition: all 0.2s ease;
+}
+
+.input-shell.error {
+  box-shadow: 0 0 0 2px #dc2626, 0 10px 18px rgba(220, 38, 38, 0.1);
+  background: #fef2f2;
+}
+.input-shell.error .input-icon {
+  color: #dc2626;
+  opacity: 1;
 }
 
 .input-shell--pill {
@@ -913,14 +923,16 @@ textarea::placeholder {
   transition: opacity 0.22s ease, transform 0.22s ease;
 }
 
-.metric-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 32px 60px rgba(15, 23, 42, 0.18);
-}
+@media (hover: hover) {
+  .metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 32px 60px rgba(15, 23, 42, 0.18);
+  }
 
-.metric-card:hover::before {
-  opacity: 1;
-  transform: scale(1.04);
+  .metric-card:hover::before {
+    opacity: 1;
+    transform: scale(1.04);
+  }
 }
 
 .metric-card h3 {
@@ -992,14 +1004,17 @@ textarea::placeholder {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.panel--link:hover,
-.panel--link:focus-visible {
-  transform: translateY(-4px);
-  box-shadow: 0 32px 60px rgba(15, 23, 42, 0.16);
+@media (hover: hover) {
+  .panel--link:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 32px 60px rgba(15, 23, 42, 0.16);
+  }
 }
 
 .panel--link:focus-visible {
   outline: 3px solid rgba(31, 115, 241, 0.18);
+  transform: translateY(-4px);
+  box-shadow: 0 32px 60px rgba(15, 23, 42, 0.16);
 }
 
 .panel h2 {
@@ -1790,9 +1805,10 @@ textarea {
   .why-grid,
   .stats-grid,
   .dashboard-panels,
-  .expense-detail-grid,
+  .info-grid,
   .filter-grid__top,
-  .form-grid {
+  .form-grid,
+  .expense-detail-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1804,12 +1820,86 @@ textarea {
     position: relative;
     height: auto;
   }
-  }
 }
 
 @media (max-width: 880px) {
+  html {
+    font-size: 88%;
+  }
+
   :root {
     --content-width: min(100% - 32px, 1360px);
+  }
+
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    padding: 12px 16px;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    gap: 0;
+    z-index: 50;
+    border-top: 1px solid rgba(15, 23, 42, 0.04);
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+    background: #fff;
+  }
+
+  .sidebar .brand {
+    display: none;
+  }
+
+  .sidebar-nav {
+    display: contents;
+  }
+
+  .sidebar-link, .sidebar-exit {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    padding: 12px 4px;
+    margin-top: 0;
+    border-radius: 8px;
+    text-decoration: none;
+    background: transparent !important;
+    text-align: center;
+    color: #64748b;
+  }
+
+  .sidebar-link span, .sidebar-exit span {
+    display: none;
+  }
+
+  .sidebar-link.is-active {
+    color: #0062FF !important;
+    transform: none;
+  }
+
+  .sidebar-exit {
+    color: #dc2626 !important;
+  }
+
+  .sidebar-link svg, .sidebar-exit svg {
+    width: 26px;
+    height: 26px;
+    margin-right: 0;
+  }
+
+  .app-main {
+    padding: 24px 16px 120px;
   }
 
   .topbar {
@@ -1825,8 +1915,23 @@ textarea {
   .topbar-actions {
     display: none;
     grid-column: 1 / -1;
-    justify-content: flex-start;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding-top: 24px;
+    width: 100%;
+  }
+  
+  .topbar-actions {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 8px;
+    padding-top: 32px;
+    width: 100%;
+  }
+
+  .topbar-actions .button {
+    width: 100%;
+    max-width: 320px;
   }
 
   .topbar.is-open .topnav,
@@ -1844,9 +1949,28 @@ textarea {
   .form-actions,
   .filter-grid__bottom,
   .expense-summary,
-  .expense-category-item {
+  .transaction-detail-banner {
     flex-direction: column;
     align-items: stretch;
+    text-align: left;
+  }
+
+  .transaction-detail-banner {
+    padding: 24px;
+    align-items: flex-start;
+  }
+
+  .banner-amount {
+    text-align: left;
+    margin-top: 12px;
+  }
+
+  .transaction-detail-info {
+    padding: 24px;
+  }
+
+  .app-header--split h1 {
+    margin-bottom: 16px;
   }
 
   .success-modal__card {
@@ -1880,6 +2004,10 @@ textarea {
 }
 
 @media (max-width: 640px) {
+  html {
+    font-size: 82%;
+  }
+
   .section {
     padding: 44px 0;
   }
@@ -1944,7 +2072,7 @@ textarea {
   }
 
   .app-main {
-    padding: 24px 18px 34px;
+    padding: 24px 16px 120px;
   }
 
   .panel,
@@ -1957,7 +2085,12 @@ textarea {
   }
 
   .sidebar-link {
-    font-size: 1.2rem;
+    font-size: 1rem;
+  }
+
+  .sidebar-link svg, .sidebar-exit svg {
+    width: 24px;
+    height: 24px;
   }
 }
 /* Custom Select Dropdown Component */
@@ -2010,14 +2143,14 @@ textarea {
 .custom-select__options {
   display: none;
   position: absolute;
-  top: -4px;
-  left: -4px;
-  right: -4px;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
   background-color: #F4F5F7;
   border: 1px solid #e2e8f0;
   border-radius: 20px;
   box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
-  padding: 54px 8px 8px 8px; /* space for trigger */
+  padding: 8px;
   z-index: 9999;
 }
 
@@ -2028,8 +2161,7 @@ textarea {
 .custom-select.open .custom-select__trigger {
   position: relative;
   z-index: 101;
-  border-color: transparent;
-  background-color: transparent;
+  border-color: #cbd5e1;
 }
 
 .custom-select__option {
@@ -2060,17 +2192,21 @@ textarea {
   transform: translateX(-50%);
   background-color: #0f172a;
   color: #fff;
-  padding: 14px 28px;
-  border-radius: 999px;
+  padding: 14px 24px;
+  border-radius: 16px;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 0.95rem;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2);
   transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   z-index: 10000;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
-  white-space: nowrap;
+  width: max-content;
+  max-width: 90vw;
+  text-align: center;
+  line-height: 1.5;
 }
 
 .toast.show {
