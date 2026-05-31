@@ -1,20 +1,76 @@
 const defaultTransactions = [];
 
-const expenseCategoryPalette = [
-  { label: "Makanan", color: "#8751ED", iconLabel: "MK" },
-  { label: "Transport", color: "#FF3434", iconLabel: "TR" },
-  { label: "Hiburan", color: "#10C260", iconLabel: "HB" },
-  { label: "Belanja", color: "#1653B5", iconLabel: "BL" },
-  { label: "Tagihan", color: "#43A8E6", iconLabel: "TG" },
-  { label: "Kesehatan", color: "#FF7A21", iconLabel: "KS" },
-  { label: "Pendidikan", color: "#EAB308", iconLabel: "PD" },
-  { label: "Lainnya", color: "#64748b", iconLabel: "LN" }
+const defaultCategories = [
+  { label: "Makanan", type: "Pengeluaran", color: "#8751ED", iconLabel: "MK" },
+  { label: "Transport", type: "Pengeluaran", color: "#FF3434", iconLabel: "TR" },
+  { label: "Hiburan", type: "Pengeluaran", color: "#10C260", iconLabel: "HB" },
+  { label: "Belanja", type: "Pengeluaran", color: "#1653B5", iconLabel: "BL" },
+  { label: "Tagihan", type: "Pengeluaran", color: "#43A8E6", iconLabel: "TG" },
+  { label: "Kesehatan", type: "Pengeluaran", color: "#FF7A21", iconLabel: "KS" },
+  { label: "Pendidikan", type: "Pengeluaran", color: "#EAB308", iconLabel: "PD" },
+  { label: "Gaji", type: "Pemasukan", color: "#10C260", iconLabel: "GJ" },
+  { label: "Freelance", type: "Pemasukan", color: "#43A8E6", iconLabel: "FL" },
+  { label: "Investasi", type: "Pemasukan", color: "#8751ED", iconLabel: "IV" },
+  { label: "Bonus", type: "Pemasukan", color: "#EAB308", iconLabel: "BN" },
+  { label: "Lainnya", type: "Lainnya", color: "#64748b", iconLabel: "LN" }
 ];
 
 const SESSION_KEY = "luxentra_session";
 const TRANSACTIONS_KEY = "luxentra_transactions";
 const PROFILE_AVATAR_KEY = "luxentra_profile_avatar";
 const RECOVERY_EMAIL_KEY = "luxentra_recovery_email";
+const USERS_KEY = "luxentra_users";
+const CATEGORIES_KEY = "luxentra_default_categories";
+const BROADCAST_KEY = "luxentra_broadcast";
+
+function getStoredUsers() {
+  const users = readStoredJson(USERS_KEY, null);
+  return Array.isArray(users) ? users : [];
+}
+
+function saveUsers(users) {
+  writeStoredJson(USERS_KEY, users);
+}
+
+function getUserByEmail(email) {
+  const users = getStoredUsers();
+  return users.find(u => u.email.toLowerCase() === email.toLowerCase());
+}
+
+function getCategories() {
+  let stored = readStoredJson(CATEGORIES_KEY, null);
+  
+  if (Array.isArray(stored)) {
+    let modified = false;
+    
+    // Fix missing types for legacy categories
+    stored.forEach(c => {
+      if (!c.type) {
+        c.type = "Pengeluaran";
+        modified = true;
+      }
+    });
+
+    const hasIncome = stored.some(c => c.type === "Pemasukan");
+    if (!hasIncome) {
+      // User is missing income categories (legacy storage), merge them in
+      const defaultIncomes = defaultCategories.filter(c => c.type === "Pemasukan");
+      stored = [...stored, ...defaultIncomes];
+      modified = true;
+    }
+    
+    if (modified) {
+      writeStoredJson(CATEGORIES_KEY, stored);
+    }
+    return stored;
+  }
+  
+  return defaultCategories;
+}
+
+function saveCategories(cats) {
+  writeStoredJson(CATEGORIES_KEY, cats);
+}
 const protectedPages = new Set(["dashboard", "transactions", "new-transaction", "settings", "expense-categories"]);
 const authPages = new Set(["login", "register"]);
 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -24,6 +80,18 @@ let transactions = [];
 function getCurrentPage() {
   return document.body?.dataset.page || "";
 }
+
+function generateUUID() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 
 function readStoredSession() {
   let localSession = "";
@@ -161,7 +229,7 @@ function getStoredTransactions() {
     
     return {
       ...item,
-      id: item.id || crypto.randomUUID(),
+      id: item.id || generateUUID(),
       timestamp: item.timestamp || (parsedDate ? parsedDate.toISOString() : new Date().toISOString())
     };
   });
@@ -207,6 +275,7 @@ function createSession(payload = {}) {
   const session = {
     name: normalizedName || "Pengguna",
     email,
+    role: payload.role || "user",
     createdAt: new Date().toISOString()
   };
 
@@ -227,6 +296,20 @@ function initSessionRouting() {
 
   if (protectedPages.has(page) && !session) {
     redirectTo("login.html");
+    return null;
+  }
+
+  if (page.startsWith("admin-") && session && session.role !== "admin") {
+    redirectTo("dashboard.html");
+    return null;
+  }
+
+  if (authPages.has(page) && session) {
+    if (session.role === "admin") {
+      redirectTo("admin-dashboard.html");
+    } else {
+      redirectTo("dashboard.html");
+    }
     return null;
   }
 
@@ -287,14 +370,84 @@ function initAuthForms() {
         showToast("Password harus memiliki minimal 8 karakter, mengandung huruf, angka, dan minimal 1 huruf besar.", "error");
         return;
       }
+      
+      const emailValue = emailInput.value.trim();
+      const users = getStoredUsers();
+      if (users.some(u => u.email.toLowerCase() === emailValue.toLowerCase())) {
+        showToast("Email sudah terdaftar. Silakan login.", "error");
+        return;
+      }
+      
+      const role = emailValue.toLowerCase() === "admin@luxentra.app" ? "admin" : "user";
+      const newUser = {
+        id: generateUUID(),
+        name: textInput?.value.trim() || "Pengguna",
+        email: emailValue,
+        password: password,
+        createdAt: new Date().toISOString(),
+        status: "active",
+        role: role
+      };
+      
+      users.push(newUser);
+      saveUsers(users);
+
+      createSession({
+        email: newUser.email,
+        name: newUser.name,
+        role: newUser.role
+      });
+      
+      if (role === "admin") {
+        redirectTo("admin-dashboard.html");
+      } else {
+        redirectTo("dashboard.html");
+      }
+    } else if (page === "login") {
+      const emailValue = emailInput.value.trim();
+      const pwd = passwordInput?.value || "";
+      
+      let user = getUserByEmail(emailValue);
+      
+      // Auto-create for dev convenience if not found (optional, but requested for mock auth)
+      if (!user) {
+        const role = emailValue.toLowerCase() === "admin@luxentra.app" ? "admin" : "user";
+        user = {
+          id: generateUUID(),
+          name: emailValue.split("@")[0],
+          email: emailValue,
+          password: pwd,
+          createdAt: new Date().toISOString(),
+          status: "active",
+          role: role
+        };
+        const users = getStoredUsers();
+        users.push(user);
+        saveUsers(users);
+      }
+      
+      if (user.status === "blocked") {
+        showToast("Akun Anda telah dinonaktifkan oleh Admin.", "error");
+        return;
+      }
+      
+      if (user.password !== pwd) {
+        showToast("Email atau Password salah.", "error");
+        return;
+      }
+      
+      createSession({
+        email: user.email,
+        name: user.name,
+        role: user.role
+      });
+      
+      if (user.role === "admin") {
+        redirectTo("admin-dashboard.html");
+      } else {
+        redirectTo("dashboard.html");
+      }
     }
-
-    createSession({
-      email: emailInput?.value,
-      name: page === "register" ? textInput?.value : ""
-    });
-
-    redirectTo("dashboard.html");
   });
 
   const googleButton = form.querySelector(".button--google");
@@ -302,7 +455,8 @@ function initAuthForms() {
     googleButton.addEventListener("click", () => {
       createSession({
         name: "Pengguna Google",
-        email: "google.user@luxentra.app"
+        email: "google.user@luxentra.app",
+        role: "user"
       });
       redirectTo("dashboard.html");
     });
@@ -635,7 +789,7 @@ function getDonutSeries() {
     return item.amount < 0 ? total + Math.abs(item.amount) : total;
   }, 0);
 
-  return expenseCategoryPalette
+  return getCategories()
     .map((item) => {
       const amount = transactions.reduce((total, transaction) => {
         if (transaction.amount >= 0 || transaction.category !== item.label) return total;
@@ -657,7 +811,7 @@ function renderTransactionItem(item) {
     ? '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>'
     : '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline><polyline points="16 17 22 17 22 11"></polyline></svg>';
   return `
-    <a href="transaction-detail.html?id=${item.id}" class="transaction-item" data-type="${item.type}" data-category="${item.category}" data-amount="${item.amount}">
+    <a href="transaction-detail.html?id=${item.id}" class="transaction-item mb-4" data-type="${item.type}" data-category="${item.category}" data-amount="${item.amount}">
       <div class="transaction-item__icon ${isIncome ? "transaction-item__icon--income" : "transaction-item__icon--expense"}">${icon}</div>
       <div>
         <h3>${item.title}</h3>
@@ -734,12 +888,16 @@ function initAreaChartInteraction() {
   const container = document.getElementById("areaChart");
   if (!panel || !container) return;
 
-  // Make it visually clickable
+  // Make it visually interactive
   panel.classList.add("panel--link");
   panel.setAttribute("tabindex", "0");
   panel.setAttribute("role", "button");
-  panel.setAttribute("aria-label", "Tekan untuk mengganti grafik antara Pemasukan dan Pengeluaran");
 
+  const isTouchDevice = () => {
+    return !window.matchMedia("(hover: hover)").matches;
+  };
+
+  // Mobile/Touch toggle function
   const toggleChart = () => {
     if (activeAreaVariant === "expense") {
       setAreaChartVariant("income");
@@ -748,13 +906,43 @@ function initAreaChartInteraction() {
     }
   };
 
-  panel.addEventListener("click", toggleChart);
+  // Hover handlers for cursor devices (desktop)
+  panel.addEventListener("pointerenter", (e) => {
+    if (e.pointerType === "mouse") {
+      setAreaChartVariant("income");
+    }
+  });
+
+  panel.addEventListener("pointerleave", (e) => {
+    if (e.pointerType === "mouse") {
+      setAreaChartVariant("expense");
+    }
+  });
+
+  // Click handler (functions as toggle on mobile/touch, or keyboard for accessibility)
+  panel.addEventListener("click", (e) => {
+    if (e.pointerType !== "mouse") {
+      toggleChart();
+    }
+  });
+
   panel.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       toggleChart();
     }
   });
+
+  // Set initial aria-label dynamically
+  const updateAriaLabel = () => {
+    if (window.matchMedia("(hover: none)").matches) {
+      panel.setAttribute("aria-label", "Tekan untuk mengganti grafik antara Pemasukan dan Pengeluaran");
+    } else {
+      panel.setAttribute("aria-label", "Arahkan kursor ke panel untuk melihat Pemasukan");
+    }
+  };
+  updateAriaLabel();
+  window.addEventListener("resize", updateAriaLabel);
 }
 
 function renderBarChart() {
@@ -1051,8 +1239,8 @@ function initNewTransactionForm() {
   if (typeField && categoryField) {
     typeField.addEventListener("change", () => {
       const type = typeField.value;
-      const incomeOptions = ["Gaji", "Freelance", "Investasi", "Bonus", "Lainnya"];
-      const expenseOptions = ["Makanan", "Transport", "Hiburan", "Belanja", "Tagihan", "Kesehatan", "Pendidikan", "Lainnya"];
+      const incomeOptions = getCategories().filter(c => c.type === "Pemasukan").map(c => c.label);
+      const expenseOptions = getCategories().filter(c => c.type === "Pengeluaran").map(c => c.label);
 
       categoryField.innerHTML = '<option value="">Pilih kategori</option>';
       const optionsToUse = type === "Pemasukan" ? incomeOptions : (type === "Pengeluaran" ? expenseOptions : []);
@@ -1105,7 +1293,7 @@ function initNewTransactionForm() {
 
     const formattedDate = formatLongDate(dateValue);
     const transaction = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       title: buildTransactionTitle({ type, category, note, dateLabel: formattedDate }),
       subtitle: `${category} - ${formattedDate}`,
       amount: type === "Pengeluaran" ? -amount : amount,
@@ -1227,6 +1415,42 @@ function initTransactionFilters() {
   const sortDirection = document.getElementById("sortDirection");
   const resetButton = document.getElementById("resetFilters");
 
+  function populateCategories() {
+    if (!categoryFilter) return;
+    const cats = getCategories();
+    const type = typeFilter ? typeFilter.value : "";
+    
+    // Filter categories if a type is selected, otherwise show all
+    const filteredCats = type ? cats.filter(c => c.type === type) : cats;
+    
+    categoryFilter.innerHTML = '<option value="">Semua Kategori</option>';
+    
+    filteredCats.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c.label;
+      opt.textContent = c.label;
+      categoryFilter.appendChild(opt);
+    });
+
+    // Re-initialize custom select UI for this dropdown
+    if (categoryFilter.nextElementSibling && categoryFilter.nextElementSibling.classList.contains("custom-select")) {
+      categoryFilter.nextElementSibling.remove();
+    }
+    categoryFilter.style.display = "";
+    initCustomSelects();
+  }
+
+  // Initial population
+  populateCategories();
+
+  if (typeFilter) {
+    typeFilter.addEventListener("change", () => {
+      // Reset category filter when type changes so we don't filter by a hidden category
+      if (categoryFilter) categoryFilter.value = "";
+      populateCategories();
+    });
+  }
+
   function applyFilters() {
     let next = [...transactions];
 
@@ -1307,7 +1531,31 @@ document.addEventListener("DOMContentLoaded", () => {
   updateTransactionsStats();
   renderRecentTransactions();
   initTransactionFilters();
+  initBroadcast();
 });
+
+function initBroadcast() {
+  const banner = document.getElementById("broadcastBanner");
+  const textEl = document.getElementById("broadcastBannerText");
+  const closeBtn = document.getElementById("closeBroadcastBtn");
+  if (!banner || !textEl || !closeBtn) return;
+
+  const broadcast = readStoredJson(BROADCAST_KEY, null);
+  if (!broadcast || !broadcast.message) return;
+
+  const dismissedKey = `luxentra_dismissed_${broadcast.id}`;
+  const isDismissed = readStoredJson(dismissedKey, false);
+
+  if (!isDismissed) {
+    textEl.textContent = broadcast.message;
+    banner.classList.remove("hidden");
+
+    closeBtn.addEventListener("click", () => {
+      banner.classList.add("hidden");
+      writeStoredJson(dismissedKey, true);
+    });
+  }
+}
 
 function initCustomSelects() {
   const selects = document.querySelectorAll("select");
@@ -1318,6 +1566,9 @@ function initCustomSelects() {
     
     const wrapper = document.createElement("div");
     wrapper.className = `custom-select ${select.className}`;
+    if (select.style.width) {
+      wrapper.style.width = select.style.width;
+    }
     // keep pill classes if present
     if (select.classList.contains("filter-select-pill") || select.parentNode.classList.contains("filter-input-pill")) {
       wrapper.classList.add("custom-select--pill");
@@ -1358,7 +1609,7 @@ function initCustomSelects() {
     optionsContainer.className = "custom-select__options";
     
     Array.from(select.options).forEach((option) => {
-      if (!option.value) return; // Skip placeholder option
+      if (option.disabled) return; // Skip disabled options (like placeholders)
 
       const optDiv = document.createElement("div");
       optDiv.className = "custom-select__option";

@@ -8,8 +8,9 @@
   </head>
   <body class="app-page" data-page="settings">
     <div class="app-shell">
+      <!-- Sidebar / Bottom Nav -->
       <aside class="sidebar">
-        <a class="brand brand--dark" href="dashboard.html">
+        <a class="brand" href="dashboard.html">
           <img src="assets/logo-mark.svg" alt="" />
           <span>
             <strong>Luxentra Finance</strong>
@@ -20,18 +21,22 @@
         <nav class="sidebar-nav">
           <a class="sidebar-link" href="dashboard.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg><span>Dashboard</span></a>
           <a class="sidebar-link" href="transactions.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l4 4-4 4"></path><path d="M20 7H4"></path><path d="M8 21l-4-4 4-4"></path><path d="M4 17h16"></path></svg><span>Transaksi</span></a>
-          <a class="sidebar-link" href="new-transaction.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span>Tambah Transaksi</span></a>
+          <a class="sidebar-link" href="new-transaction.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></svg><span>Tambah Transaksi</span></a>
           <a class="sidebar-link is-active" href="settings.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg><span>Pengaturan</span></a>
         </nav>
 
-        <a class="sidebar-exit" href="index.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg><span>Keluar</span></a>
+        <a class="sidebar-exit" href="index.html">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          <span>Keluar</span>
+        </a>
       </aside>
 
-      <main class="app-main">
-        <header class="app-header">
+      <!-- Main Content -->
+      <main class="app-main flex-1 p-6 md:p-10 pb-[120px] md:pb-10 max-w-[1360px] mx-auto w-full">
+        <header class="app-header mb-6 sm:mb-9 flex justify-between items-center">
           <div>
-            <h1>Pengaturan Profil</h1>
-            <p>Kelola informasi akun dan preferensi Anda</p>
+            <h1 class="text-lux-text font-title text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[1.1] tracking-tight">Pengaturan Profil</h1>
+            <p class="text-lux-text-muted text-[1.05rem] mt-1">Kelola informasi akun dan preferensi Anda</p>
           </div>
         </header>
 
@@ -42,47 +47,47 @@
           <div class="profile-card">
             <div style="position: relative; display: inline-block;">
               <div class="profile-avatar">A</div>
-              <button type="button" style="position: absolute; bottom: 0; right: 0; background: #f5f7fb; border: 1px solid #e2e8f0; border-radius: 50%; width: 36px; height: 36px; display: grid; place-items: center; color: #64748b; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+              <button class="absolute bottom-0 right-0 bg-[#f5f7fb] border border-[#e2e8f0] rounded-full w-9 h-9 grid place-items-center text-[#64748b] cursor-pointer shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] hover:bg-[#e2e8f0] transition-colors" type="button">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
               </button>
             </div>
             <div class="profile-card__copy">
               <h3>Agus Kurnawan</h3>
               <p>aguskn692@gmail.com</p>
-              <button class="button button--outline" type="button" style="display: inline-flex; align-items: center; gap: 8px;">
+              <button class="button button--outline inline-flex items-center justify-center gap-2 border-2 border-lux-text rounded-full py-2 px-5 font-extrabold text-lux-text bg-transparent hover:bg-lux-text/5 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer transition-all text-sm" type="button">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                 Ganti foto
               </button>
             </div>
           </div>
 
-          <form class="form-grid">
-            <label>
-              <span>Nama Lengkap</span>
-              <div class="input-shell input-shell--pill">
-                <span class="input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
-                <input id="settingsNameInput" type="text" value="Agus Kurnawan" readonly />
+          <form class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <label class="grid gap-3">
+              <span class="text-[1.4rem] font-extrabold text-lux-text">Nama Lengkap</span>
+              <div class="input-shell w-full border-0 rounded-full bg-[#eef0f4] shadow-[inset_0_-2px_0_rgba(15,23,42,0.04),_0_10px_18px_rgba(15,23,42,0.08)] grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-[22px] py-[18px] transition-all duration-200 ease-in-out">
+                <span class="input-icon text-lux-text-muted"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
+                <input class="border-0 bg-transparent text-lux-text outline-none w-full" id="settingsNameInput" type="text" value="Agus Kurnawan" readonly />
               </div>
             </label>
 
-            <label>
-              <span>Email</span>
-              <div class="input-shell input-shell--pill">
-                <span class="input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></span>
-                <input id="settingsEmailInput" type="email" value="aguskn692@gmail.com" readonly />
+            <label class="grid gap-3">
+              <span class="text-[1.4rem] font-extrabold text-lux-text">Email</span>
+              <div class="input-shell w-full border-0 rounded-full bg-[#eef0f4] shadow-[inset_0_-2px_0_rgba(15,23,42,0.04),_0_10px_18px_rgba(15,23,42,0.08)] grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-[22px] py-[18px] transition-all duration-200 ease-in-out">
+                <span class="input-icon text-lux-text-muted"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></span>
+                <input class="border-0 bg-transparent text-lux-text outline-none w-full" id="settingsEmailInput" type="email" value="aguskn692@gmail.com" readonly />
               </div>
             </label>
 
-            <label class="form-grid__full">
-              <span>Nomor Telepon (Opsional)</span>
-              <div class="input-shell input-shell--pill">
-                <span class="input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></span>
-                <input id="settingsPhoneInput" type="text" placeholder="Belum ditambahkan" readonly />
+            <label class="md:col-span-2 grid gap-3">
+              <span class="text-[1.4rem] font-extrabold text-lux-text">Nomor Telepon (Opsional)</span>
+              <div class="input-shell w-full border-0 rounded-full bg-[#eef0f4] shadow-[inset_0_-2px_0_rgba(15,23,42,0.04),_0_10px_18px_rgba(15,23,42,0.08)] grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-[22px] py-[18px] transition-all duration-200 ease-in-out">
+                <span class="input-icon text-lux-text-muted"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></span>
+                <input class="border-0 bg-transparent text-lux-text outline-none w-full placeholder:text-[#8992a3]" id="settingsPhoneInput" type="text" placeholder="Belum ditambahkan" readonly />
               </div>
             </label>
 
-            <div class="form-actions" style="justify-content: flex-start; margin-top: 12px;">
-              <a href="edit-profile.html" class="button button--primary" style="display: inline-flex; align-items: center; gap: 8px;">
+            <div class="form-actions md:col-span-2 flex justify-start mt-3">
+              <a href="edit-profile.html" class="button button--primary inline-flex items-center justify-center gap-2 border-0 rounded-full py-3.5 px-8 font-extrabold text-white bg-[#0062ff] shadow-[0_18px_35px_rgba(0,98,255,0.24)] transition-all duration-180 ease-in-out hover:-translate-y-0.5 active:translate-y-0 cursor-pointer text-[1.1rem]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                 Edit Profil
               </a>
@@ -91,12 +96,12 @@
         </section>
 
         <section class="panel">
-          <div class="danger-row">
+          <div class="danger-row flex justify-between items-center gap-4 flex-wrap">
             <div>
-              <h2 style="font-size: 1.6rem; color: #000; margin-bottom: 6px;">HapusAkun</h2>
-              <p style="margin: 0;">Hapus akun dan semua data terkait secara permanen</p>
+              <h2 style="font-size: 1.6rem; color: #000; margin-bottom: 6px;">Hapus Akun</h2>
+              <p style="margin: 0; color: #6b7280; font-size: 1.05rem; font-weight: 500;">Hapus akun dan semua data terkait secara permanen</p>
             </div>
-            <button class="button button--danger" id="deleteAccountButton" type="button" style="display: inline-flex; align-items: center; gap: 8px;">
+            <button class="button button--danger inline-flex items-center justify-center gap-2 border-0 rounded-full py-3.5 px-7 font-extrabold text-white bg-gradient-to-br from-[#ef2f2f] to-[#a91313] shadow-[0_18px_35px_rgba(225,29,29,0.2)] transition-all duration-180 ease-in-out hover:-translate-y-0.5 active:translate-y-0 cursor-pointer" id="deleteAccountButton" type="button">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
               Hapus Akun
             </button>
@@ -117,13 +122,13 @@
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
         </div>
 
-        <h2 id="deleteAccountTitle">Akun Berhasil Di Hapus</h2>
+        <h2 id="deleteAccountTitle">Akun Berhasil Dihapus</h2>
         <p>
           Akun Anda sudah kami hapus.<br />
           Terima kasih telah menggunakan layanan kami.
         </p>
 
-        <button class="button button--primary" id="deleteAccountBackButton" type="button">Kembali</button>
+        <button class="button button--primary inline-flex items-center justify-center gap-2.5 border-0 rounded-full py-3.5 px-8 font-extrabold text-white bg-[#0062ff] shadow-[0_18px_35px_rgba(0,98,255,0.24)] transition-all duration-180 ease-in-out hover:-translate-y-0.5 active:translate-y-0 cursor-pointer" id="deleteAccountBackButton" type="button">Kembali</button>
       </section>
     </div>
 

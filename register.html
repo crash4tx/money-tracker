@@ -6,58 +6,62 @@
     <title>Daftar | Luxentra Finance</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body class="auth-page auth-page--register" data-page="register">
-    <main class="auth-shell">
-      <section class="auth-card">
-        <div class="auth-card__title">DAFTAR</div>
-        <div class="auth-card__body">
-          <h1>Mulai Kelola Keuangan Anda</h1>
-          <p>Buat akun baru untuk memulai pengalaman finansial yang lebih rapi.</p>
+  <body class="min-h-screen bg-[#f7f7f8] relative overflow-x-hidden overflow-y-auto" data-page="register">
+    <!-- Background Bubbles -->
+    <div class="fixed top-[-14vw] left-[-10vw] w-[42vw] h-[42vw] min-w-[380px] min-h-[380px] rounded-full bg-lux-blue-500 opacity-80 pointer-events-none z-0"></div>
+    <div class="fixed right-[-12vw] bottom-[-12vw] w-[42vw] h-[42vw] min-w-[380px] min-h-[380px] rounded-full bg-lux-blue-500 opacity-80 pointer-events-none z-0"></div>
 
-          <form class="auth-form">
-            <label>
-              <span>Nama Lengkap</span>
-              <div class="input-shell">
-                <span class="input-icon">👤</span>
-                <input type="text" placeholder="Masukan Nama Lengkap Anda" />
+    <main class="relative z-10 grid place-items-center min-h-screen p-4 sm:p-6">
+      <section class="relative w-full max-w-[860px] rounded-[48px] bg-white shadow-lux">
+        <div class="w-[calc(100%-64px)] max-w-[560px] mx-auto -mt-6 sm:-mt-[22px] px-7 py-5 sm:py-[22px] rounded-3xl bg-gradient-to-r from-lux-blue-500 to-lux-blue-700 text-white text-center font-title text-[clamp(1.8rem,5vw,3rem)] font-extrabold tracking-tight">DAFTAR</div>
+        <div class="p-6 sm:p-8">
+          <h1 class="text-lux-text font-title text-[clamp(2rem,4vw,3.6rem)] font-black leading-[1.04] tracking-tight">Mulai Kelola Keuangan Anda</h1>
+          <p class="mt-3.5 mb-6 text-lux-text-muted text-[1.05rem] leading-relaxed">Buat akun baru untuk memulai pengalaman finansial yang lebih rapi.</p>
+
+          <form class="auth-form grid gap-[22px]">
+            <label class="grid gap-3">
+              <span class="text-[1.4rem] font-extrabold text-lux-text">Nama Lengkap</span>
+              <div class="input-shell w-full border-0 rounded-[22px] bg-[#eef0f4] shadow-[inset_0_-2px_0_rgba(15,23,42,0.04),_0_10px_18px_rgba(15,23,42,0.08)] grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-[22px] py-[18px] transition-all duration-200 ease-in-out">
+                <span class="input-icon text-2xl opacity-60">👤</span>
+                <input class="border-0 bg-transparent text-lux-text outline-none w-full placeholder:text-[#8992a3]" type="text" placeholder="Masukan Nama Lengkap Anda" />
               </div>
             </label>
 
-            <label>
-              <span>Email</span>
-              <div class="input-shell">
-                <span class="input-icon">✉</span>
-                <input type="email" placeholder="Masukan Email" />
+            <label class="grid gap-3">
+              <span class="text-[1.4rem] font-extrabold text-lux-text">Email</span>
+              <div class="input-shell w-full border-0 rounded-[22px] bg-[#eef0f4] shadow-[inset_0_-2px_0_rgba(15,23,42,0.04),_0_10px_18px_rgba(15,23,42,0.08)] grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-[22px] py-[18px] transition-all duration-200 ease-in-out">
+                <span class="input-icon text-2xl opacity-60">✉</span>
+                <input class="border-0 bg-transparent text-lux-text outline-none w-full placeholder:text-[#8992a3]" type="email" placeholder="Masukan Email" />
               </div>
             </label>
 
-            <label>
-              <span>Password</span>
-              <div class="input-shell">
-                <span class="input-icon">🔒</span>
-                <input type="password" placeholder="Masukan Password" />
-                <button type="button" class="password-toggle" tabindex="-1">
+            <label class="grid gap-3">
+              <span class="text-[1.4rem] font-extrabold text-lux-text">Password</span>
+              <div class="input-shell w-full border-0 rounded-[22px] bg-[#eef0f4] shadow-[inset_0_-2px_0_rgba(15,23,42,0.04),_0_10px_18px_rgba(15,23,42,0.08)] grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-[22px] py-[18px] transition-all duration-200 ease-in-out">
+                <span class="input-icon text-2xl opacity-60">🔒</span>
+                <input class="border-0 bg-transparent text-lux-text outline-none w-full placeholder:text-[#8992a3]" type="password" placeholder="Masukan Password" />
+                <button type="button" class="password-toggle bg-none border-none p-0 cursor-pointer text-[#94a3b8] flex items-center justify-center transition-colors duration-200 hover:text-lux-text" tabindex="-1">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
             </label>
 
-            <label>
-              <span>Konfirmasi Password</span>
-              <div class="input-shell">
-                <span class="input-icon">🔐</span>
-                <input type="password" placeholder="Masukan Password Sekali Lagi" />
-                <button type="button" class="password-toggle" tabindex="-1">
+            <label class="grid gap-3">
+              <span class="text-[1.4rem] font-extrabold text-lux-text">Konfirmasi Password</span>
+              <div class="input-shell w-full border-0 rounded-[22px] bg-[#eef0f4] shadow-[inset_0_-2px_0_rgba(15,23,42,0.04),_0_10px_18px_rgba(15,23,42,0.08)] grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-[22px] py-[18px] transition-all duration-200 ease-in-out">
+                <span class="input-icon text-2xl opacity-60">🔐</span>
+                <input class="border-0 bg-transparent text-lux-text outline-none w-full placeholder:text-[#8992a3]" type="password" placeholder="Masukan Password Sekali Lagi" />
+                <button type="button" class="password-toggle bg-none border-none p-0 cursor-pointer text-[#94a3b8] flex items-center justify-center transition-colors duration-200 hover:text-lux-text" tabindex="-1">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
             </label>
 
-            <button class="button button--primary button--block" type="submit">Daftar</button>
+            <button class="button button--primary w-full inline-flex items-center justify-center gap-2.5 border-0 rounded-full py-3.5 px-6 font-extrabold text-white bg-[#0062ff] shadow-[0_18px_35px_rgba(0,98,255,0.24)] transition-all duration-180 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_18px_35px_rgba(0,98,255,0.35)] active:translate-y-0 cursor-pointer mt-2" type="submit">Daftar</button>
           </form>
 
-          <p class="auth-switch">
-            Sudah Punya Akun? <a href="login.html">Masuk Disini</a>
+          <p class="mt-[18px] text-center text-lux-text text-[1.1rem]">
+            Sudah Punya Akun? <a class="font-black text-lux-blue-500 hover:underline" href="login.html">Masuk Disini</a>
           </p>
         </div>
       </section>

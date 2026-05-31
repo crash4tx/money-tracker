@@ -6,193 +6,197 @@
     <title>Luxentra Finance</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body class="landing-page" data-page="landing">
-    <header class="topbar">
-      <a class="brand brand--light" href="index.html" aria-label="Luxentra Finance">
-        <img src="assets/logo-mark.svg" alt="" />
-        <span>
-          <strong>Luxentra<br>Finance</strong>
-          <small>Personal Finance</small>
-        </span>
-      </a>
+  <body class="landing-page bg-black text-white relative min-h-screen font-body overflow-x-hidden" data-page="landing">
+    <div class="fixed inset-0 bg-[radial-gradient(circle_at_40%_40%,rgba(0,98,255,0.35)_0%,rgba(0,0,0,0)_65%)] pointer-events-none z-0"></div>
 
-      <button class="menu-toggle" type="button" aria-label="Buka menu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
+    <header class="sticky top-0 z-50 bg-[#18181b] border-b border-white/8 relative z-10">
+      <div class="topbar flex justify-between items-center md:grid md:grid-cols-[auto_1fr_auto] gap-7 py-6 px-6 sm:px-10 lg:px-12 w-full max-w-[1360px] mx-auto">
+        <a class="inline-flex items-center gap-4 text-white" href="index.html" aria-label="Luxentra Finance">
+          <img class="w-14 h-14 flex-shrink-0 rounded-full" src="assets/logo-mark.svg" alt="" />
+          <span class="grid gap-0">
+            <strong class="font-title text-2xl font-black tracking-tighter leading-[1.1]">Luxentra<br>Finance</strong>
+            <small class="text-[0.85rem] opacity-80 mt-1">Personal Finance</small>
+          </span>
+        </a>
 
-      <nav class="topnav">
-        <a href="#fitur">Fitur</a>
-        <a href="#keunggulan">Keunggulan</a>
-        <a href="#kontak">Kontak</a>
-      </nav>
+        <button class="menu-toggle md:hidden w-12 h-12 border-0 rounded-2xl bg-white/8 cursor-pointer flex flex-col justify-center items-center gap-1.5" type="button" aria-label="Buka menu">
+          <span class="block w-[22px] h-0.5 bg-white"></span>
+          <span class="block w-[22px] h-0.5 bg-white"></span>
+          <span class="block w-[22px] h-0.5 bg-white"></span>
+        </button>
 
-      <div class="topbar-actions">
-        <a class="link-button" href="register.html">Daftar</a>
-        <a class="button button--primary" href="login.html">Login</a>
+        <nav class="topnav hidden md:flex items-center gap-12 justify-center">
+          <a class="text-white/88 text-2xl font-extrabold hover:text-white transition-colors" href="#fitur">Fitur</a>
+          <a class="text-white/88 text-2xl font-extrabold hover:text-white transition-colors" href="#keunggulan">Keunggulan</a>
+          <a class="text-white/88 text-2xl font-extrabold hover:text-white transition-colors" href="#kontak">Kontak</a>
+        </nav>
+
+        <div class="topbar-actions hidden sm:flex items-center gap-12">
+          <a class="text-white/88 text-2xl font-extrabold hover:text-white transition-colors" href="register.html">Daftar</a>
+          <a class="inline-flex items-center justify-center border-0 rounded-full py-3.5 px-11 font-extrabold text-white text-[1.15rem] bg-gradient-to-br from-[#0070f3] to-[#004bbb] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer transition-all" href="login.html">Login</a>
+        </div>
       </div>
     </header>
 
-    <main>
-      <section class="hero section">
-        <div class="hero-copy">
-          <div class="hero-badge">
-            <span class="badge-icon">⭐</span>
-            <span>Platfrom Keuangan Moderen</span>
+    <main class="relative z-10">
+      <section class="hero w-full max-w-[1360px] mx-auto py-14 px-6 sm:px-10 lg:px-12 grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] items-start gap-12 pt-10">
+        <div class="hero-copy pt-10">
+          <div class="hero-badge inline-flex items-center gap-3 mb-6 py-3 px-5 rounded-full bg-gradient-to-r from-[#1b8d23] to-[#135c19] text-white text-[1rem] font-extrabold">
+            <span class="badge-icon text-[1.05rem] text-[#ffd441]">⭐</span>
+            <span>Platform Keuangan Modern</span>
           </div>
 
-          <h1>Kelola Keuanganmu<br />dengan <span class="text-blue">Lebih<br />Cerdas</span></h1>
-          <p>
+          <h1 class="font-title text-[clamp(3rem,6.5vw,4.4rem)] font-extrabold leading-[1.1] tracking-tight">Kelola Keuanganmu<br />dengan <span class="text-blue text-[#3b82f6]">Lebih<br />Cerdas</span></h1>
+          <p class="max-w-[38ch] my-6 sm:my-8 text-[1.25rem] text-white/88 leading-relaxed">
             Pantau pemasukan dan pengeluaran, atur keuangan, dan capai tujuan
             finansialmu dengan mudah.
           </p>
 
-          <div class="hero-points">
-            <article class="mini-point">
-              <span class="mini-point__icon mini-point__icon--green">
+          <div class="grid gap-[22px]">
+            <article class="grid grid-cols-[60px_1fr] items-center gap-4">
+              <span class="grid place-items-center w-[60px] h-[60px] rounded-[20px] text-[1.8rem] bg-[#2aad1f]/22 text-[#7aff66]">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
               </span>
               <div>
-                <h3>Tracking pemasukan &amp; pengeluaran</h3>
-                <p>Monitor setiap transaksi secara real-time</p>
+                <h3 class="font-title text-[1.3rem] font-black text-white tracking-tight">Tracking pemasukan &amp; pengeluaran</h3>
+                <p class="mt-1 text-[1.05rem] text-white/65 leading-relaxed">Monitor setiap transaksi secara real-time</p>
               </div>
             </article>
-            <article class="mini-point">
-              <span class="mini-point__icon mini-point__icon--blue">
+            <article class="grid grid-cols-[60px_1fr] items-center gap-4">
+              <span class="grid place-items-center w-[60px] h-[60px] rounded-[20px] text-[1.8rem] bg-[#1f73f1]/22 text-[#5ba6ff]">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
               </span>
               <div>
-                <h3>Kategori transaksi yang rapi</h3>
-                <p>Organisir dengan kategori terstruktur</p>
+                <h3 class="font-title text-[1.3rem] font-black text-white tracking-tight">Kategori transaksi yang rapi</h3>
+                <p class="mt-1 text-[1.05rem] text-white/65 leading-relaxed">Organisir dengan kategori terstruktur</p>
               </div>
             </article>
-            <article class="mini-point">
-              <span class="mini-point__icon mini-point__icon--purple">
+            <article class="grid grid-cols-[60px_1fr] items-center gap-4">
+              <span class="grid place-items-center w-[60px] h-[60px] rounded-[20px] text-[1.8rem] bg-[#7c3aed]/22 text-[#a877ff]">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="8" y2="16"></line><line x1="16" y1="10" x2="16" y2="16"></line></svg>
               </span>
               <div>
-                <h3>Laporan keuangan otomatis</h3>
-                <p>Insight mendalam dengan laporan real-time</p>
+                <h3 class="font-title text-[1.3rem] font-black text-white tracking-tight">Laporan keuangan otomatis</h3>
+                <p class="mt-1 text-[1.05rem] text-white/65 leading-relaxed">Insight mendalam dengan laporan real-time</p>
               </div>
             </article>
           </div>
         </div>
 
-        <div class="hero-preview">
-          <div class="hero-preview__frame">
-            <img src="assets/hero-dashboard.png" alt="Preview dashboard Luxentra Finance" />
+        <div class="hero-preview sticky top-[112px] hidden lg:block">
+          <div class="overflow-hidden rounded-[34px] bg-white shadow-[0_40px_80px_rgba(0,0,0,0.35)]">
+            <img class="w-full h-auto" src="assets/hero-dashboard.png" alt="Preview dashboard Luxentra Finance" />
           </div>
         </div>
       </section>
 
-      <section id="fitur" class="section">
-        <div class="section-heading section-heading--center">
-          <h2>Fitur Unggulan</h2>
-          <p>Semua yang kamu butuhkan untuk mengelola keuangan pribadi.</p>
+      <section id="fitur" class="w-full max-w-[1360px] mx-auto py-14 px-6 sm:px-10 lg:px-12">
+        <div class="mb-9 text-center">
+          <h2 class="font-title text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[1.1] tracking-tight">Fitur Unggulan</h2>
+          <p class="text-lux-text-muted text-[1.05rem] leading-relaxed mt-2">Semua yang kamu butuhkan untuk mengelola keuangan pribadi.</p>
         </div>
 
-        <div class="feature-grid">
-          <article class="feature-card">
-            <span class="feature-card__icon feature-card__icon--green">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <article class="rounded-lux-lg p-7 sm:p-[30px] shadow-lux bg-[#0f172a]">
+            <span class="grid place-items-center w-[78px] h-[78px] rounded-[24px] mb-6 text-[2rem] bg-[#16a34a] text-white">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
             </span>
-            <h3>Tracking pemasukan &amp; pengeluaran</h3>
-            <p>Pantau setiap rupiah yang masuk dan keluar dengan detail</p>
+            <h3 class="font-title text-[1.75rem] font-black text-white tracking-tight">Tracking pemasukan &amp; pengeluaran</h3>
+            <p class="mt-4 text-white/76 text-[1.08rem] leading-relaxed">Pantau setiap rupiah yang masuk dan keluar dengan detail</p>
           </article>
-          <article class="feature-card">
-            <span class="feature-card__icon feature-card__icon--blue">
+          <article class="rounded-lux-lg p-7 sm:p-[30px] shadow-lux bg-[#0f172a]">
+            <span class="grid place-items-center w-[78px] h-[78px] rounded-[24px] mb-6 text-[2rem] bg-[#2563eb] text-white">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
             </span>
-            <h3>Kategori transaksi yang rapi</h3>
-            <p>Organisir keuangan dengan kategori yang terstruktur</p>
+            <h3 class="font-title text-[1.75rem] font-black text-white tracking-tight">Kategori transaksi yang rapi</h3>
+            <p class="mt-4 text-white/76 text-[1.08rem] leading-relaxed">Organisir keuangan dengan kategori yang terstruktur</p>
           </article>
-          <article class="feature-card">
-            <span class="feature-card__icon feature-card__icon--purple">
+          <article class="rounded-lux-lg p-7 sm:p-[30px] shadow-lux bg-[#0f172a]">
+            <span class="grid place-items-center w-[78px] h-[78px] rounded-[24px] mb-6 text-[2rem] bg-[#9333ea] text-white">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="8" y2="16"></line><line x1="16" y1="10" x2="16" y2="16"></line></svg>
             </span>
-            <h3>Laporan keuangan otomatis</h3>
-            <p>Dapatkan Insight mendalam dengan laporan real-time</p>
+            <h3 class="font-title text-[1.75rem] font-black text-white tracking-tight">Laporan keuangan otomatis</h3>
+            <p class="mt-4 text-white/76 text-[1.08rem] leading-relaxed">Dapatkan Insight mendalam dengan laporan real-time</p>
           </article>
         </div>
       </section>
 
-      <section id="keunggulan" class="section">
-        <div class="section-heading section-heading--center">
-          <h2>Mengapa Pilih Kami?</h2>
-          <p>Solusi keuangan yang dirancang untuk kemudahan dan keamanan.</p>
+      <section id="keunggulan" class="w-full max-w-[1360px] mx-auto py-14 px-6 sm:px-10 lg:px-12">
+        <div class="mb-9 text-center">
+          <h2 class="font-title text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[1.1] tracking-tight">Mengapa Pilih Kami?</h2>
+          <p class="text-lux-text-muted text-[1.05rem] leading-relaxed mt-2">Solusi keuangan yang dirancang untuk kemudahan dan keamanan.</p>
         </div>
 
-        <div class="why-grid">
-          <article class="why-card">
-            <span class="why-card__icon">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <article class="rounded-lux-lg p-7 sm:p-[30px] shadow-lux bg-[#27272a] text-center">
+            <span class="grid place-items-center w-16 h-16 mx-auto mb-6 text-[1.5rem] bg-transparent border-2 border-white/20 text-white/50 rounded-full">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             </span>
-            <h3>Aman &amp; Terpercaya</h3>
-            <p>Data keuanganmu dienkripsi dan tersimpan dengan aman</p>
+            <h3 class="font-title text-[1.75rem] font-black text-white tracking-tight">Aman &amp; Terpercaya</h3>
+            <p class="mt-4 text-white/76 text-[1.08rem] leading-relaxed">Data keuanganmu dienkripsi dan tersimpan dengan aman</p>
           </article>
-          <article class="why-card">
-            <span class="why-card__icon">
+          <article class="rounded-lux-lg p-7 sm:p-[30px] shadow-lux bg-[#27272a] text-center">
+            <span class="grid place-items-center w-16 h-16 mx-auto mb-6 text-[1.5rem] bg-transparent border-2 border-white/20 text-white/50 rounded-full">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
             </span>
-            <h3>Cepat &amp; Mudah</h3>
-            <p>Interface intuitif yang mudah digunakan untuk semua orang</p>
+            <h3 class="font-title text-[1.75rem] font-black text-white tracking-tight">Cepat &amp; Mudah</h3>
+            <p class="mt-4 text-white/76 text-[1.08rem] leading-relaxed">Interface intuitif yang mudah digunakan untuk semua orang</p>
           </article>
-          <article class="why-card">
-            <span class="why-card__icon">
+          <article class="rounded-lux-lg p-7 sm:p-[30px] shadow-lux bg-[#27272a] text-center">
+            <span class="grid place-items-center w-16 h-16 mx-auto mb-6 text-[1.5rem] bg-transparent border-2 border-white/20 text-white/50 rounded-full">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
             </span>
-            <h3>Gratis Selamanya</h3>
-            <p>Nikmati semua fitur premium tanpa biaya berlangganan</p>
+            <h3 class="font-title text-[1.75rem] font-black text-white tracking-tight">Gratis Selamanya</h3>
+            <p class="mt-4 text-white/76 text-[1.08rem] leading-relaxed">Nikmati semua fitur premium tanpa biaya berlangganan</p>
           </article>
         </div>
       </section>
 
-      <section class="section">
-        <div class="cta-strip">
-          <h2>Siap Mengelola Keuanganmu?</h2>
-          <p>
+      <section class="w-full max-w-[1360px] mx-auto py-14 px-6 sm:px-10 lg:px-12">
+        <div class="py-16 px-6 sm:px-12 rounded-lux-xl bg-gradient-to-br from-[#006aff] to-[#0044cc] text-center shadow-[0_30px_60px_rgba(0,98,255,0.3)]">
+          <h2 class="font-title text-[clamp(2.4rem,5vw,3.8rem)] font-extrabold tracking-tight text-white leading-none">Siap Mengelola Keuanganmu?</h2>
+          <p class="max-w-[68ch] mx-auto mt-[18px] mb-9 text-white/90 text-[1.3rem] leading-snug">
             Bergabunglah dengan pengguna yang sudah merasakan kemudahan
             mengelola keuangan
           </p>
-          <div class="cta-strip__actions">
-            <a class="button button--green" href="register.html">Mulai gratis Sekarang</a>
-            <a class="button button--white" href="login.html">Sudah Punya Akun? Login</a>
+          <div class="flex justify-center gap-5 flex-wrap">
+            <a class="inline-flex items-center justify-center gap-2.5 border-0 rounded-full py-3.5 px-6 font-extrabold text-white bg-[#15803d] hover:bg-[#166534] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer text-[1.1rem] transition-all" href="register.html">Mulai gratis Sekarang</a>
+            <a class="inline-flex items-center justify-center gap-2.5 border-0 rounded-full py-3.5 px-6 font-extrabold text-[#0f172a] bg-white hover:bg-slate-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer text-[1.1rem] transition-all" href="login.html">Sudah Punya Akun? Login</a>
           </div>
         </div>
       </section>
     </main>
 
-    <footer id="kontak" class="footer">
+    <footer id="kontak" class="grid grid-cols-1 md:grid-cols-[1fr_2.5fr] gap-10 w-full max-w-[1360px] mx-auto py-[68px] px-6 sm:px-10 lg:px-12 border-t border-white/8 relative z-10">
       <div class="footer-brand">
-        <a class="brand brand--light" href="index.html">
-          <img src="assets/logo-mark.svg" alt="" />
-          <span>
-            <strong>Luxentra Finance</strong>
-            <small>Personal Finance</small>
+        <a class="inline-flex items-center gap-4 text-white" href="index.html">
+          <img class="w-14 h-14 flex-shrink-0 rounded-full" src="assets/logo-mark.svg" alt="" />
+          <span class="grid gap-0">
+            <strong class="font-title text-2xl font-black tracking-tighter leading-[1.1]">Luxentra Finance</strong>
+            <small class="text-[0.85rem] opacity-80 mt-1">Personal Finance</small>
           </span>
         </a>
-        <p>Platform manajemen keuangan pribadi yang modern dan mudah digunakan.</p>
+        <p class="max-w-[18ch] mt-7 text-white/80 text-[1.2rem] leading-normal">Platform manajemen keuangan pribadi yang modern dan mudah digunakan.</p>
       </div>
 
-      <div class="footer-links">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-[18px]">
         <div>
-          <h4>Produk</h4>
-          <a href="#fitur">Fitur</a>
-          <a href="#keunggulan">Keunggulan</a>
-          <a href="#kontak">Kontak</a>
+          <h4 class="my-2 font-title text-[1.2rem] font-black text-white text-left tracking-tight">Produk</h4>
+          <a class="block my-4 text-white/78 text-[1.06rem] text-left hover:text-white hover:underline transition-colors" href="#fitur">Fitur</a>
+          <a class="block my-4 text-white/78 text-[1.06rem] text-left hover:text-white hover:underline transition-colors" href="#keunggulan">Keunggulan</a>
+          <a class="block my-4 text-white/78 text-[1.06rem] text-left hover:text-white hover:underline transition-colors" href="#kontak">Kontak</a>
         </div>
         <div>
-          <h4>Perusahaan</h4>
-          <a href="#">Tentang Kami</a>
-          <a href="#">Blog</a>
-          <a href="#">karir</a>
+          <h4 class="my-2 font-title text-[1.2rem] font-black text-white text-left tracking-tight">Perusahaan</h4>
+          <a class="block my-4 text-white/78 text-[1.06rem] text-left hover:text-white hover:underline transition-colors" href="#">Tentang Kami</a>
+          <a class="block my-4 text-white/78 text-[1.06rem] text-left hover:text-white hover:underline transition-colors" href="#">Blog</a>
+          <a class="block my-4 text-white/78 text-[1.06rem] text-left hover:text-white hover:underline transition-colors" href="#">Karir</a>
         </div>
         <div>
-          <h4>support</h4>
-          <a href="#">Help Center</a>
-          <a href="#">Kontak</a>
-          <a href="#">Privacy Policy</a>
+          <h4 class="my-2 font-title text-[1.2rem] font-black text-white text-left tracking-tight">Support</h4>
+          <a class="block my-4 text-white/78 text-[1.06rem] text-left hover:text-white hover:underline transition-colors" href="#">Help Center</a>
+          <a class="block my-4 text-white/78 text-[1.06rem] text-left hover:text-white hover:underline transition-colors" href="#">Kontak</a>
+          <a class="block my-4 text-white/78 text-[1.06rem] text-left hover:text-white hover:underline transition-colors" href="#">Privacy Policy</a>
         </div>
       </div>
     </footer>

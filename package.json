@@ -4,6 +4,13 @@
   "private": true,
   "description": "Static web prototype based on the Luxentra Finance PDF design.",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build:css": "npx @tailwindcss/cli -i ./input.css -o ./styles.css",
+    "watch:css": "npx @tailwindcss/cli -i ./input.css -o ./styles.css --watch"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.3.0"
   }
 }
