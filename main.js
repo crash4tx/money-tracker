@@ -276,7 +276,7 @@ function createSession(payload = {}) {
     name: normalizedName || "Pengguna",
     email,
     role: payload.role || "user",
-    createdAt: new Date().toISOString()
+    createdAt: payload.createdAt || new Date().toISOString()
   };
 
   writeStoredSession(JSON.stringify(session));
@@ -395,7 +395,8 @@ function initAuthForms() {
       createSession({
         email: newUser.email,
         name: newUser.name,
-        role: newUser.role
+        role: newUser.role,
+        createdAt: newUser.createdAt
       });
       
       if (role === "admin") {
@@ -439,7 +440,8 @@ function initAuthForms() {
       createSession({
         email: user.email,
         name: user.name,
-        role: user.role
+        role: user.role,
+        createdAt: user.createdAt
       });
       
       if (user.role === "admin") {
@@ -1531,30 +1533,70 @@ document.addEventListener("DOMContentLoaded", () => {
   updateTransactionsStats();
   renderRecentTransactions();
   initTransactionFilters();
-  initBroadcast();
+  initBroadcast(session);
 });
 
-function initBroadcast() {
+function initBroadcast(session) {
   const banner = document.getElementById("broadcastBanner");
   const textEl = document.getElementById("broadcastBannerText");
   const closeBtn = document.getElementById("closeBroadcastBtn");
   if (!banner || !textEl || !closeBtn) return;
 
-  const broadcast = readStoredJson(BROADCAST_KEY, null);
-  if (!broadcast || !broadcast.message) return;
+  const activeSession = session || getSession();
 
-  const dismissedKey = `luxentra_dismissed_${broadcast.id}`;
-  const isDismissed = readStoredJson(dismissedKey, false);
-
-  if (!isDismissed) {
-    textEl.textContent = broadcast.message;
-    banner.classList.remove("hidden");
-
-    closeBtn.addEventListener("click", () => {
-      banner.classList.add("hidden");
-      writeStoredJson(dismissedKey, true);
-    });
+  const BROADCAST_HISTORY_KEY = "luxentra_broadcast_history";
+  // Gunakan riwayat untuk menampilkan semua pesan yang belum ditutup
+  const history = readStoredJson(BROADCAST_HISTORY_KEY, []);
+  
+  // Jika admin belum pernah mengirim pengumuman sama sekali
+  if (history.length === 0) {
+    // Fallback ke sistem lama (untuk kompatibilitas)
+    const oldBroadcast = readStoredJson(BROADCAST_KEY, null);
+    if (oldBroadcast) history.push(oldBroadcast);
+    else return;
   }
+
+  let currentBroadcast = null;
+
+  function showNextBroadcast() {
+    // Cari pengumuman paling lama (index terkecil) yang belum di-dismiss
+    currentBroadcast = history.find(b => {
+      // 1. Cek apakah pesan sudah ditutup
+      const isDismissed = readStoredJson(`luxentra_dismissed_${b.id}`, false);
+      if (isDismissed) return false;
+      
+      // 2. Cek apakah user mendaftar SETELAH pengumuman dibuat
+      if (activeSession && activeSession.createdAt && b.timestamp) {
+        const userCreated = new Date(activeSession.createdAt).getTime();
+        const broadcastCreated = new Date(b.timestamp).getTime();
+        // Jika user dibuat setelah broadcast dikirim, lewati broadcast ini
+        if (userCreated > broadcastCreated) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    if (currentBroadcast) {
+      textEl.textContent = currentBroadcast.message;
+      banner.classList.remove("hidden");
+    } else {
+      banner.classList.add("hidden");
+    }
+  }
+
+  closeBtn.addEventListener("click", () => {
+    if (currentBroadcast) {
+      banner.classList.add("hidden");
+      writeStoredJson(`luxentra_dismissed_${currentBroadcast.id}`, true);
+      
+      // Beri jeda sedikit sebelum memunculkan pengumuman berikutnya agar transisinya terlihat
+      setTimeout(showNextBroadcast, 300);
+    }
+  });
+
+  showNextBroadcast();
 }
 
 function initCustomSelects() {

@@ -6,8 +6,8 @@
     <title>Admin Dashboard | Luxentra Finance</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body class="app-page overflow-x-hidden" data-page="admin-dashboard">
-    <div class="app-shell overflow-x-hidden w-full max-w-[100vw]">
+  <body class="app-page" data-page="admin-dashboard">
+    <div class="app-shell">
       <!-- Sidebar / Bottom Nav -->
       <aside class="sidebar">
         <a class="brand" href="admin-dashboard.html">
@@ -32,7 +32,7 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="app-main flex-1 min-w-0 p-6 md:p-10 pb-[120px] md:pb-10 max-w-[1360px] mx-auto w-full overflow-x-hidden" style="min-width: 0;">
+      <main class="app-main flex-1 min-w-0 p-6 md:p-10 pb-[120px] md:pb-10 max-w-[1360px] mx-auto w-full" style="min-width: 0;">
         <header class="app-header mb-6 sm:mb-9 flex justify-between items-center">
           <div>
             <h1 class="text-lux-text font-title text-[clamp(1.8rem,4vw,3.2rem)] font-extrabold leading-[1.1] tracking-tight">Admin Dashboard</h1>
@@ -53,11 +53,11 @@
           </article>
         </section>
 
-        <section class="dashboard-panels grid grid-cols-1 lg:grid-cols-2 gap-6 mb-7">
-          <article class="panel max-w-full">
+        <section class="dashboard-panels grid grid-cols-1 md:grid-cols-2 gap-6 mb-7">
+          <article class="panel max-w-full flex flex-col h-full">
             <h2>Kirim Pengumuman</h2>
             <p>Kirim pesan siaran (broadcast) yang akan muncul di dasbor semua pengguna.</p>
-            <form id="adminBroadcastForm" class="mt-4">
+            <form id="adminBroadcastForm" class="mt-4 shrink-0">
               <div class="flex flex-col gap-2 relative">
                 <div class="input-shell w-full border-0 rounded-[22px] bg-[#eef0f4] shadow-[inset_0_-2px_0_rgba(15,23,42,0.04),_0_10px_18px_rgba(15,23,42,0.08)] flex items-center px-[22px] py-[18px] transition-all duration-200 ease-in-out">
                   <input class="border-0 bg-transparent text-lux-text outline-none font-body text-[1rem] w-full h-full" id="broadcastMessage" type="text" placeholder="Masukkan pesan pengumuman..." required />
@@ -65,6 +65,18 @@
                 <button class="button button--primary w-full mt-2" type="submit">Kirim Pengumuman</button>
               </div>
             </form>
+
+            <div style="margin-top: 1.5rem; display: flex; flex-direction: column; flex: 1; min-height: 200px;">
+              <h3 style="font-weight: 700; color: #0f172a; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; flex-shrink: 0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #0062ff;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Riwayat Pengumuman
+              </h3>
+              <div style="position: relative; flex: 1; min-height: 0;">
+                <div id="adminBroadcastHistory" style="position: absolute; inset: 0; display: flex; flex-direction: column; gap: 0.75rem; overflow-y: auto; padding-right: 0.25rem;">
+                  <!-- Riwayat diinject via js -->
+                </div>
+              </div>
+            </div>
           </article>
 
           <article class="panel max-w-full">
@@ -114,8 +126,33 @@
     </div>
 
     <!-- User Action Modal -->
-    <div id="userActionModal" class="modal-backdrop" hidden>
-      <div class="modal-content max-w-sm w-full mx-auto p-6 bg-white rounded-3xl">
+    <style>
+      .admin-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+      .admin-modal-backdrop[hidden] {
+        display: none !important;
+      }
+      .admin-modal-content {
+        max-width: 24rem;
+        width: 100%;
+        margin: 0 auto;
+        padding: 1.5rem;
+        background-color: #ffffff;
+        border-radius: 1.5rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      }
+    </style>
+    <div id="userActionModal" class="admin-modal-backdrop" hidden>
+      <div class="admin-modal-content">
         <h2 class="text-2xl font-bold mb-2 font-title" id="userActionTitle">Ubah Status</h2>
         <p class="text-lux-text-muted mb-6" id="userActionDesc">Pilih tindakan untuk akun ini.</p>
         <div class="flex flex-col gap-3">

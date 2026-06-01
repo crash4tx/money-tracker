@@ -211,6 +211,38 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCategories();
 
   // Broadcast
+  const BROADCAST_KEY = "luxentra_broadcast";
+  const BROADCAST_HISTORY_KEY = "luxentra_broadcast_history";
+  const historyContainer = document.getElementById("adminBroadcastHistory");
+  
+  function renderBroadcastHistory() {
+    if (!historyContainer) return;
+    
+    const history = readStoredJson(BROADCAST_HISTORY_KEY, []);
+    historyContainer.innerHTML = "";
+    
+    if (history.length === 0) {
+      historyContainer.innerHTML = `<p style="font-size: 0.875rem; color: #94a3b8; font-style: italic; padding: 1rem 0; text-align: center;">Belum ada riwayat pengumuman.</p>`;
+      return;
+    }
+    
+    history.slice().reverse().forEach(item => {
+      const div = document.createElement("div");
+      div.style.cssText = "padding: 0.875rem; border-radius: 1rem; background-color: #f8fafc; border: 1px solid rgba(226, 232, 240, 0.6); display: flex; flex-direction: column; gap: 0.375rem;";
+      
+      const date = new Date(item.timestamp);
+      const dateStr = `${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()} • ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+      
+      div.innerHTML = `
+        <span style="font-size: 0.75rem; font-weight: 700; color: #0062ff; letter-spacing: 0.025em; text-transform: uppercase;">${dateStr}</span>
+        <p style="font-size: 0.95rem; color: #0f172a; margin: 0; line-height: 1.3;">${item.message}</p>
+      `;
+      historyContainer.appendChild(div);
+    });
+  }
+
+  renderBroadcastHistory();
+
   const broadcastForm = document.getElementById("adminBroadcastForm");
   if (broadcastForm) {
     broadcastForm.addEventListener("submit", (e) => {
@@ -226,6 +258,19 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       
       writeStoredJson(BROADCAST_KEY, broadcast);
+      
+      let history = readStoredJson(BROADCAST_HISTORY_KEY, []);
+      history.push(broadcast);
+      
+      // Batasi riwayat maksimal 5 pengumuman terbaru
+      if (history.length > 5) {
+        history = history.slice(-5);
+      }
+      
+      writeStoredJson(BROADCAST_HISTORY_KEY, history);
+      
+      renderBroadcastHistory();
+      
       input.value = "";
       showToast("Pengumuman berhasil disebarkan ke semua pengguna!");
     });
