@@ -1,28 +1,48 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const page = document.body.dataset.page;
   if (page !== "admin-dashboard") return;
 
-  const users = getStoredUsers();
-  
-  // Render Stats
-  const totalUsersEl = document.getElementById("adminTotalUsers");
-  const newUsersEl = document.getElementById("adminNewUsers");
-  
-  if (totalUsersEl) totalUsersEl.textContent = users.length;
-  if (newUsersEl) {
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    const newThisMonth = users.filter(u => {
-      const d = new Date(u.createdAt);
-      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-    }).length;
-    newUsersEl.textContent = newThisMonth;
+  const token = localStorage.getItem("luxentra_token");
+  if (!token) {
+    window.location.href = "login.html";
+    return;
   }
 
-  // Render Users Table
+  let users = [];
+  let selectedUserId = null;
+
+  const totalUsersEl = document.getElementById("adminTotalUsers");
+  const newUsersEl = document.getElementById("adminNewUsers");
   const tableBody = document.getElementById("adminUsersTableBody");
   const modal = document.getElementById("userActionModal");
-  let selectedUserId = null;
+
+  // Fetch Users from API
+  async function fetchUsers() {
+    try {
+      const res = await fetch("/api/admin/users", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Gagal mengambil daftar pengguna.");
+      users = await res.json();
+      
+      // Update Stats
+      if (totalUsersEl) totalUsersEl.textContent = users.length;
+      if (newUsersEl) {
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const newThisMonth = users.filter(u => {
+          const d = new Date(u.createdAt);
+          return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        }).length;
+        newUsersEl.textContent = newThisMonth;
+      }
+      
+      renderUsers();
+    } catch (err) {
+      console.error(err);
+      showToast(err.message, "error");
+    }
+  }
 
   function renderUsers() {
     if (!tableBody) return;
@@ -91,54 +111,101 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btnCancelUserAction")?.addEventListener("click", closeModal);
   
-  document.getElementById("btnBlockUser")?.addEventListener("click", () => {
-    const user = users.find(u => u.id === selectedUserId);
-    if (user) {
-      user.status = "blocked";
-      saveUsers(users);
-      renderUsers();
-      closeModal();
+  document.getElementById("btnBlockUser")?.addEventListener("click", async () => {
+    if (!selectedUserId) return;
+    try {
+      const res = await fetch(`/api/admin/users/${selectedUserId}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: "blocked" })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Gagal memblokir pengguna.");
+      }
       showToast("Pengguna berhasil diblokir.");
+      closeModal();
+      await fetchUsers();
+    } catch (err) {
+      showToast(err.message, "error");
     }
   });
 
-  document.getElementById("btnActivateUser")?.addEventListener("click", () => {
-    const user = users.find(u => u.id === selectedUserId);
-    if (user) {
-      user.status = "active";
-      saveUsers(users);
-      renderUsers();
-      closeModal();
+  document.getElementById("btnActivateUser")?.addEventListener("click", async () => {
+    if (!selectedUserId) return;
+    try {
+      const res = await fetch(`/api/admin/users/${selectedUserId}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: "active" })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Gagal mengaktifkan pengguna.");
+      }
       showToast("Pengguna berhasil diaktifkan.");
-    }
-  });
-
-  document.getElementById("btnDeleteUser")?.addEventListener("click", () => {
-    const idx = users.findIndex(u => u.id === selectedUserId);
-    if (idx > -1) {
-      users.splice(idx, 1);
-      saveUsers(users);
-      renderUsers();
       closeModal();
-      showToast("Pengguna berhasil dihapus.");
-      // update stats
-      if (totalUsersEl) totalUsersEl.textContent = users.length;
+      await fetchUsers();
+    } catch (err) {
+      showToast(err.message, "error");
     }
   });
 
-  renderUsers();
+  document.getElementById("btnDeleteUser")?.addEventListener("click", async () => {
+    if (!selectedUserId) return;
+    try {
+      const res = await fetch(`/api/admin/users/${selectedUserId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Gagal menghapus pengguna.");
+      }
+      showToast("Pengguna berhasil dihapus.");
+      closeModal();
+      await fetchUsers();
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  });
 
-  // Categories
+  await fetchUsers();
+
+  // ==========================================
+  // CATEGORIES MANAGEMENT
+  // ==========================================
   const categoriesList = document.getElementById("adminCategoriesList");
   const categoryForm = document.getElementById("adminCategoryForm");
   const categoryFilter = document.getElementById("adminCategoryFilter");
+  let allCats = [];
+
+  async function fetchCategories() {
+    try {
+      const res = await fetch("/api/categories", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Gagal mengambil kategori.");
+      allCats = await res.json();
+      renderCategories();
+    } catch (err) {
+      console.error(err);
+      showToast(err.message, "error");
+    }
+  }
   
   function renderCategories() {
     if (!categoriesList) return;
-    const allCats = getCategories();
     const filterType = categoryFilter ? categoryFilter.value : "Pemasukan";
     
-    // Default legacy categories to "Pengeluaran" if type is missing
     const filteredCats = allCats.filter(c => {
       const cType = c.type || "Pengeluaran";
       return cType === filterType;
@@ -146,7 +213,6 @@ document.addEventListener("DOMContentLoaded", () => {
     
     categoriesList.innerHTML = "";
     filteredCats.forEach((cat) => {
-      const originalIdx = allCats.findIndex(c => c === cat);
       const div = document.createElement("div");
       div.className = "flex justify-between items-center bg-gray-50 px-4 py-2 rounded-lg border border-gray-100";
       const cType = cat.type || "Pengeluaran";
@@ -157,25 +223,32 @@ document.addEventListener("DOMContentLoaded", () => {
       div.innerHTML = `
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded flex items-center justify-center text-white text-xs font-bold" style="background: ${cat.color}">
-            ${cat.iconLabel}
+            ${cat.icon_label || cat.iconLabel || "LN"}
           </div>
           <span class="font-bold">${cat.label} ${typeBadge}</span>
         </div>
-        <button class="text-red-500 hover:text-red-700" data-cat-idx="${originalIdx}">
+        ${cat.user_id ? `
+        <button class="text-red-500 hover:text-red-700" data-cat-id="${cat.id}">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-        </button>
+        </button>` : ''}
       `;
       categoriesList.appendChild(div);
     });
 
-    categoriesList.querySelectorAll("button[data-cat-idx]").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        const idx = e.currentTarget.getAttribute("data-cat-idx");
-        const cats = getCategories();
-        cats.splice(idx, 1);
-        saveCategories(cats);
-        renderCategories();
-        showToast("Kategori dihapus.");
+    categoriesList.querySelectorAll("button[data-cat-id]").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const id = e.currentTarget.getAttribute("data-cat-id");
+        try {
+          const res = await fetch(`/api/categories/${id}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (!res.ok) throw new Error("Gagal menghapus kategori.");
+          showToast("Kategori dihapus.");
+          await fetchCategories();
+        } catch (err) {
+          showToast(err.message, "error");
+        }
       });
     });
   }
@@ -185,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (categoryForm) {
-    categoryForm.addEventListener("submit", (e) => {
+    categoryForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const input = document.getElementById("newCategoryName");
       const filterType = categoryFilter ? categoryFilter.value : "Pemasukan";
@@ -194,31 +267,47 @@ document.addEventListener("DOMContentLoaded", () => {
       
       if (!name) return;
 
-      const cats = getCategories();
-      // random color and icon label
       const colors = ["#8751ED", "#FF3434", "#10C260", "#1653B5", "#43A8E6", "#FF7A21", "#EAB308", "#64748b"];
       const color = colors[Math.floor(Math.random() * colors.length)];
       const iconLabel = name.substring(0, 2).toUpperCase();
       
-      cats.push({ label: name, type, color, iconLabel });
-      saveCategories(cats);
-      renderCategories();
-      input.value = "";
-      showToast("Kategori berhasil ditambahkan.");
+      try {
+        const res = await fetch("/api/categories", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ label: name, type, color, iconLabel })
+        });
+        if (!res.ok) throw new Error("Gagal menambahkan kategori.");
+        input.value = "";
+        showToast("Kategori berhasil ditambahkan.");
+        await fetchCategories();
+      } catch (err) {
+        showToast(err.message, "error");
+      }
     });
   }
 
-  renderCategories();
+  await fetchCategories();
 
-  // Broadcast
-  const BROADCAST_KEY = "luxentra_broadcast";
-  const BROADCAST_HISTORY_KEY = "luxentra_broadcast_history";
+  // ==========================================
+  // BROADCAST MANAGEMENT
+  // ==========================================
   const historyContainer = document.getElementById("adminBroadcastHistory");
   
-  function renderBroadcastHistory() {
+  async function renderBroadcastHistory() {
     if (!historyContainer) return;
     
-    const history = readStoredJson(BROADCAST_HISTORY_KEY, []);
+    let history = [];
+    try {
+      const res = await fetch("/api/broadcasts");
+      if (res.ok) history = await res.json();
+    } catch (err) {
+      console.error(err);
+    }
+    
     historyContainer.innerHTML = "";
     
     if (history.length === 0) {
@@ -226,7 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     
-    history.slice().reverse().forEach(item => {
+    history.forEach(item => {
       const div = document.createElement("div");
       div.style.cssText = "padding: 0.875rem; border-radius: 1rem; background-color: #f8fafc; border: 1px solid rgba(226, 232, 240, 0.6); display: flex; flex-direction: column; gap: 0.375rem;";
       
@@ -241,39 +330,32 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  renderBroadcastHistory();
+  await renderBroadcastHistory();
 
   const broadcastForm = document.getElementById("adminBroadcastForm");
   if (broadcastForm) {
-    broadcastForm.addEventListener("submit", (e) => {
+    broadcastForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const input = document.getElementById("broadcastMessage");
       const msg = input.value.trim();
       if (!msg) return;
 
-      const broadcast = {
-        id: generateUUID(),
-        message: msg,
-        timestamp: new Date().toISOString()
-      };
-      
-      writeStoredJson(BROADCAST_KEY, broadcast);
-      
-      let history = readStoredJson(BROADCAST_HISTORY_KEY, []);
-      history.push(broadcast);
-      
-      // Batasi riwayat maksimal 5 pengumuman terbaru
-      if (history.length > 5) {
-        history = history.slice(-5);
+      try {
+        const res = await fetch("/api/admin/broadcast", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ message: msg })
+        });
+        if (!res.ok) throw new Error("Gagal mengirim pengumuman.");
+        input.value = "";
+        showToast("Pengumuman berhasil disebarkan!");
+        await renderBroadcastHistory();
+      } catch (err) {
+        showToast(err.message, "error");
       }
-      
-      writeStoredJson(BROADCAST_HISTORY_KEY, history);
-      
-      renderBroadcastHistory();
-      
-      input.value = "";
-      showToast("Pengumuman berhasil disebarkan ke semua pengguna!");
     });
   }
-
 });

@@ -45,6 +45,7 @@
     --leading-normal: 1.5;
     --leading-relaxed: 1.625;
     --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
     --radius-2xl: 1rem;
     --radius-3xl: 1.5rem;
     --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
@@ -226,6 +227,9 @@
   .relative {
     position: relative;
   }
+  .static {
+    position: static;
+  }
   .sticky {
     position: sticky;
   }
@@ -339,6 +343,9 @@
   }
   .mb-4 {
     margin-bottom: calc(var(--spacing) * 4);
+  }
+  .mb-5 {
+    margin-bottom: calc(var(--spacing) * 5);
   }
   .mb-6 {
     margin-bottom: calc(var(--spacing) * 6);
@@ -634,6 +641,9 @@
   .rounded-lux-xl {
     border-radius: var(--radius-lux-xl);
   }
+  .rounded-xl {
+    border-radius: var(--radius-xl);
+  }
   .border {
     border-style: var(--tw-border-style);
     border-width: 1px;
@@ -657,6 +667,9 @@
   .border-none {
     --tw-border-style: none;
     border-style: none;
+  }
+  .border-\[\#0062ff\]\/20 {
+    border-color: color-mix(in oklab, #0062ff 20%, transparent);
   }
   .border-\[\#e2e8f0\] {
     border-color: #e2e8f0;
@@ -738,6 +751,9 @@
   }
   .bg-\[\#eef0f4\] {
     background-color: #eef0f4;
+  }
+  .bg-\[\#f4f5f7\] {
+    background-color: #f4f5f7;
   }
   .bg-\[\#f5f7fb\] {
     background-color: #f5f7fb;
@@ -1102,6 +1118,9 @@
   .text-\[\#7aff66\] {
     color: #7aff66;
   }
+  .text-\[\#0062ff\] {
+    color: #0062ff;
+  }
   .text-\[\#94a3b8\] {
     color: #94a3b8;
   }
@@ -1292,10 +1311,24 @@
       }
     }
   }
+  .hover\:border-\[\#0062ff\] {
+    &:hover {
+      @media (hover: hover) {
+        border-color: #0062ff;
+      }
+    }
+  }
   .hover\:border-lux-red-500 {
     &:hover {
       @media (hover: hover) {
         border-color: var(--color-lux-red-500);
+      }
+    }
+  }
+  .hover\:bg-\[\#0062ff\]\/5 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: color-mix(in oklab, #0062ff 5%, transparent);
       }
     }
   }
@@ -1821,6 +1854,11 @@
   }
   .toast.show {
     bottom: 40px;
+  }
+  @media (max-width: 880px) {
+    .toast.show {
+      bottom: 90px;
+    }
   }
   .toast--success {
     background-color: #2e1065;
