@@ -5,6 +5,7 @@ const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { createClient } = require("@supabase/supabase-js");
+const nodemailer = require("nodemailer");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -189,6 +190,102 @@ function validatePasswordStrength(password) {
   const hasLetter = /[a-zA-Z]/.test(password);
   const hasNumber = /\d/.test(password);
   return password.length >= 8 && hasUpperCase && hasLetter && hasNumber;
+}
+
+// SMTP Transporter configuration
+const smtpHost = process.env.SMTP_HOST;
+const smtpPort = parseInt(process.env.SMTP_PORT || "465", 10);
+const smtpUser = process.env.SMTP_USER;
+const smtpPass = process.env.SMTP_PASS;
+
+const isSmtpConfigured = !!(smtpHost && smtpUser && smtpPass);
+
+let mailTransporter = null;
+if (isSmtpConfigured) {
+  mailTransporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465,
+    auth: {
+      user: smtpUser,
+      pass: smtpPass
+    }
+  });
+  console.log("📧 SMTP configured. Email OTPs will be sent via SMTP.");
+} else {
+  console.log("⚠️ SMTP not fully configured. Email OTPs will fallback to Server Console.");
+}
+
+// OTP Store (in-memory) & generation helpers
+const otpStore = new Map(); // key: email or userId, value: { otp, expiresAt, phone }
+
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+async function sendOTPEmail(email, name, otpCode, purpose) {
+  const subject = purpose === "recovery" 
+    ? "Reset Password Anda - Luxentra Finance" 
+    : "Verifikasi Nomor Telepon - Luxentra Finance";
+    
+  const actionText = purpose === "recovery"
+    ? "Anda baru saja meminta pengaturan ulang password akun Luxentra Finance Anda. Gunakan kode verifikasi di bawah ini untuk melanjutkan:"
+    : "Anda baru saja meminta verifikasi nomor telepon baru untuk akun Luxentra Finance Anda. Gunakan kode verifikasi di bawah ini untuk melanjutkan:";
+
+  const htmlContent = `
+    <div style="font-family: 'Outfit', 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border-radius: 24px; background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #eef0f4;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h2 style="color: #0062ff; font-weight: 800; font-size: 28px; margin: 0; letter-spacing: -0.5px;">Luxentra Finance</h2>
+        <p style="color: #64748b; font-size: 14px; margin: 5px 0 0 0;">Pengatur Keuangan Premium Anda</p>
+      </div>
+      
+      <div style="background: #f8fafc; border-radius: 16px; padding: 24px; margin-bottom: 25px;">
+        <p style="color: #1e293b; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">Halo, <strong>${name}</strong></p>
+        <p style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0;">${actionText}</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <div style="display: inline-block; background: #0062ff; color: #ffffff; font-size: 32px; font-weight: 800; letter-spacing: 6px; padding: 16px 36px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,98,255,0.18);">
+            ${otpCode}
+          </div>
+        </div>
+        
+        <p style="color: #dc2626; font-size: 13px; font-weight: 600; text-align: center; margin: 0;">
+          *Kode ini berlaku selama 10 menit. Jangan bagikan kode ini kepada siapapun!
+        </p>
+      </div>
+      
+      <hr style="border: 0; border-top: 1px solid #eef0f4; margin: 30px 0;" />
+      
+      <p style="color: #94a3b8; font-size: 12px; text-align: center; line-height: 1.6; margin: 0;">
+        Email ini dikirim secara otomatis. Jika Anda tidak merasa melakukan tindakan ini, abaikan saja email ini.<br />
+        &copy; 2026 Luxentra Finance. All rights reserved.
+      </p>
+    </div>
+  `;
+
+  if (isSmtpConfigured && mailTransporter) {
+    try {
+      await mailTransporter.sendMail({
+        from: `"${purpose === 'recovery' ? 'Luxentra Account Recovery' : 'Luxentra Phone Verification'}" <${smtpUser}>`,
+        to: email,
+        subject: subject,
+        html: htmlContent
+      });
+      console.log(`[EMAIL OTP] Successfully sent real email OTP to \x1b[36m${email}\x1b[0m.`);
+      return true;
+    } catch (err) {
+      console.error(`[EMAIL OTP] Failed to send real email to ${email}:`, err);
+    }
+  }
+
+  // Fallback logging
+  console.log(`\n=======================================================`);
+  console.log(`📥 [MOCK EMAIL OTP FALLBACK/MOCK]`);
+  console.log(`Sent to: \x1b[36m${email}\x1b[0m (${name})`);
+  console.log(`Code: \x1b[32;1m${otpCode}\x1b[0m`);
+  console.log(`Purpose: ${purpose}`);
+  console.log(`=======================================================\n`);
+  return false;
 }
 
 // ==========================================
@@ -611,6 +708,206 @@ app.get("/api/auth/avatar", authenticateToken, async (req, res) => {
       return res.status(500).json({ error: "Gagal mengambil foto profil." });
     }
   }
+});
+
+// POST: /api/auth/forgot-password
+app.post("/api/auth/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  if (!email || !email.trim()) {
+    return res.status(400).json({ error: "Email wajib diisi." });
+  }
+
+  const emailLower = email.trim().toLowerCase();
+  let user = null;
+
+  if (isMockMode) {
+    user = mockUsers.find(u => u.email.toLowerCase() === emailLower);
+  } else {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("name, email")
+        .eq("email", emailLower)
+        .maybeSingle();
+      if (error) throw error;
+      user = data;
+    } catch (err) {
+      console.error("Forgot Password Error:", err);
+      return res.status(500).json({ error: "Terjadi kesalahan pada server." });
+    }
+  }
+
+  if (!user) {
+    return res.status(400).json({ error: "Email tidak terdaftar." });
+  }
+
+  const otp = generateOTP();
+  otpStore.set(emailLower, {
+    otp,
+    expiresAt: Date.now() + 10 * 60 * 1000 // 10 menit
+  });
+
+  const sent = await sendOTPEmail(emailLower, user.name || "Pengguna", otp, "recovery");
+
+  return res.json({
+    success: true,
+    email: emailLower,
+    message: sent ? "Kode OTP pemulihan telah dikirim ke email Anda." : "SMTP tidak aktif. Kode OTP telah dicetak ke server console.",
+    isMock: !sent
+  });
+});
+
+// POST: /api/auth/reset-password
+app.post("/api/auth/reset-password", async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+
+  if (!email || !otp || !newPassword) {
+    return res.status(400).json({ error: "Email, kode OTP, dan password baru wajib diisi." });
+  }
+
+  const emailLower = email.trim().toLowerCase();
+  const trimmedOtp = otp.trim();
+
+  if (!validatePasswordStrength(newPassword)) {
+    return res.status(400).json({ error: "Password baru minimal 8 karakter, mengandung huruf, angka, dan minimal 1 huruf besar." });
+  }
+
+  const record = otpStore.get(emailLower);
+  if (!record) {
+    return res.status(400).json({ error: "Kode OTP tidak valid atau permintaan pemulihan tidak ditemukan." });
+  }
+
+  if (record.otp !== trimmedOtp) {
+    return res.status(400).json({ error: "Kode OTP salah." });
+  }
+
+  if (record.expiresAt < Date.now()) {
+    otpStore.delete(emailLower);
+    return res.status(400).json({ error: "Kode OTP telah kedaluwarsa. Silakan ajukan ulang." });
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+
+  if (isMockMode) {
+    const user = mockUsers.find(u => u.email.toLowerCase() === emailLower);
+    if (!user) {
+      return res.status(404).json({ error: "User tidak ditemukan." });
+    }
+    user.password_hash = passwordHash;
+  } else {
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ password_hash: passwordHash })
+        .eq("email", emailLower);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Reset Password Error:", err);
+      return res.status(500).json({ error: "Gagal menyetel ulang password." });
+    }
+  }
+
+  otpStore.delete(emailLower);
+  return res.json({ success: true, message: "Password berhasil disetel ulang. Silakan login." });
+});
+
+// POST: /api/auth/send-phone-otp
+app.post("/api/auth/send-phone-otp", authenticateToken, async (req, res) => {
+  const { phone } = req.body;
+
+  if (!phone || !phone.trim()) {
+    return res.status(400).json({ error: "Nomor telepon wajib diisi." });
+  }
+
+  const phoneTrimmed = phone.trim();
+  let user = null;
+
+  if (isMockMode) {
+    user = mockUsers.find(u => u.id === req.user.id);
+  } else {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("name, email")
+        .eq("id", req.user.id)
+        .maybeSingle();
+      if (error) throw error;
+      user = data;
+    } catch (err) {
+      console.error("Send Phone OTP Error:", err);
+      return res.status(500).json({ error: "Terjadi kesalahan pada server." });
+    }
+  }
+
+  if (!user) {
+    return res.status(404).json({ error: "User tidak ditemukan." });
+  }
+
+  const otp = generateOTP();
+  otpStore.set(req.user.id, {
+    otp,
+    phone: phoneTrimmed,
+    expiresAt: Date.now() + 10 * 60 * 1000 // 10 menit
+  });
+
+  const sent = await sendOTPEmail(user.email, user.name || "Pengguna", otp, "phone_verify");
+
+  return res.json({
+    success: true,
+    message: sent ? "Kode OTP verifikasi telepon telah dikirim ke email Anda." : "SMTP tidak aktif. Kode OTP telah dicetak ke server console.",
+    isMock: !sent
+  });
+});
+
+// POST: /api/auth/verify-phone-otp
+app.post("/api/auth/verify-phone-otp", authenticateToken, async (req, res) => {
+  const { phone, otp } = req.body;
+
+  if (!phone || !otp) {
+    return res.status(400).json({ error: "Nomor telepon dan kode OTP wajib diisi." });
+  }
+
+  const phoneTrimmed = phone.trim();
+  const trimmedOtp = otp.trim();
+
+  const record = otpStore.get(req.user.id);
+  if (!record) {
+    return res.status(400).json({ error: "Kode OTP tidak valid atau permintaan verifikasi tidak ditemukan." });
+  }
+
+  if (record.phone !== phoneTrimmed) {
+    return res.status(400).json({ error: "Nomor telepon tidak sesuai dengan permintaan OTP." });
+  }
+
+  if (record.otp !== trimmedOtp) {
+    return res.status(400).json({ error: "Kode OTP salah." });
+  }
+
+  if (record.expiresAt < Date.now()) {
+    otpStore.delete(req.user.id);
+    return res.status(400).json({ error: "Kode OTP telah kedaluwarsa. Silakan ajukan ulang." });
+  }
+
+  if (isMockMode) {
+    const user = mockUsers.find(u => u.id === req.user.id);
+    if (!user) return res.status(404).json({ error: "User tidak ditemukan." });
+    user.phone = phoneTrimmed;
+  } else {
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ phone: phoneTrimmed })
+        .eq("id", req.user.id);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Verify Phone OTP Error:", err);
+      return res.status(500).json({ error: "Gagal memverifikasi nomor telepon." });
+    }
+  }
+
+  otpStore.delete(req.user.id);
+  return res.json({ success: true, phone: phoneTrimmed, message: "Nomor telepon berhasil diverifikasi!" });
 });
 
 // ==========================================
