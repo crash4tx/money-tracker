@@ -26,13 +26,35 @@
               <span class="text-[1.4rem] font-extrabold text-lux-text">Kode Verifikasi</span>
               <div class="input-shell w-full border-0 rounded-[22px] bg-[#eef0f4] shadow-[inset_0_-2px_0_rgba(15,23,42,0.04),_0_10px_18px_rgba(15,23,42,0.08)] grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-[22px] py-[18px] transition-all duration-200 ease-in-out">
                 <span class="input-icon text-2xl opacity-60">#</span>
-                <input class="border-0 bg-transparent text-lux-text outline-none w-full placeholder:text-[#8992a3]" type="text" placeholder="Masukan kode verifikasi" />
+                <input class="border-0 bg-transparent text-lux-text outline-none w-full placeholder:text-[#8992a3]" id="recoveryOtpInput" type="text" placeholder="Masukan kode verifikasi" required />
+              </div>
+            </label>
+
+            <label class="grid gap-3">
+              <span class="text-[1.4rem] font-extrabold text-lux-text">Password Baru</span>
+              <div class="input-shell w-full border-0 rounded-[22px] bg-[#eef0f4] shadow-[inset_0_-2px_0_rgba(15,23,42,0.04),_0_10px_18px_rgba(15,23,42,0.08)] grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-[22px] py-[18px] transition-all duration-200 ease-in-out">
+                <span class="input-icon text-2xl opacity-60">🔒</span>
+                <input class="border-0 bg-transparent text-lux-text outline-none w-full placeholder:text-[#8992a3]" id="recoveryNewPasswordInput" type="password" placeholder="Minimal 8 Karakter" required />
+                <button type="button" class="password-toggle bg-none border-none p-0 cursor-pointer text-[#94a3b8] flex items-center justify-center transition-colors duration-200 hover:text-lux-text" tabindex="-1">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+            </label>
+
+            <label class="grid gap-3">
+              <span class="text-[1.4rem] font-extrabold text-lux-text">Konfirmasi Password Baru</span>
+              <div class="input-shell w-full border-0 rounded-[22px] bg-[#eef0f4] shadow-[inset_0_-2px_0_rgba(15,23,42,0.04),_0_10px_18px_rgba(15,23,42,0.08)] grid grid-cols-[auto_1fr_auto] items-center gap-3.5 px-[22px] py-[18px] transition-all duration-200 ease-in-out">
+                <span class="input-icon text-2xl opacity-60">🔒</span>
+                <input class="border-0 bg-transparent text-lux-text outline-none w-full placeholder:text-[#8992a3]" id="recoveryConfirmPasswordInput" type="password" placeholder="Ketik Ulang Password Baru" required />
+                <button type="button" class="password-toggle bg-none border-none p-0 cursor-pointer text-[#94a3b8] flex items-center justify-center transition-colors duration-200 hover:text-lux-text" tabindex="-1">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
               </div>
             </label>
 
             <div class="flex flex-wrap gap-4 mt-2">
-              <button class="button button--primary w-full sm:flex-1 inline-flex items-center justify-center gap-2.5 border-0 rounded-full py-3.5 px-6 font-extrabold text-white bg-[#0062ff] shadow-[0_18px_35px_rgba(0,98,255,0.24)] transition-all duration-180 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_18px_35px_rgba(0,98,255,0.35)] active:translate-y-0 cursor-pointer" type="submit">Verifikasi</button>
-              <button class="button button--ghost w-full sm:flex-1 inline-flex items-center justify-center gap-2.5 border-2 border-lux-text/12 rounded-full py-3.5 px-6 font-extrabold text-lux-text bg-transparent transition-all duration-180 ease-in-out hover:-translate-y-0.5 active:translate-y-0 cursor-pointer" type="button">Kirim Ulang Kode</button>
+              <button class="button button--primary w-full sm:flex-1 inline-flex items-center justify-center gap-2.5 border-0 rounded-full py-3.5 px-6 font-extrabold text-white bg-[#0062ff] shadow-[0_18px_35px_rgba(0,98,255,0.24)] transition-all duration-180 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_18px_35px_rgba(0,98,255,0.35)] active:translate-y-0 cursor-pointer" type="submit">Verifikasi & Ubah Password</button>
+              <button class="button button--ghost w-full sm:flex-1 inline-flex items-center justify-center gap-2.5 border-2 border-lux-text/12 rounded-full py-3.5 px-6 font-extrabold text-lux-text bg-transparent transition-all duration-180 ease-in-out hover:-translate-y-0.5 active:translate-y-0 cursor-pointer" type="button" id="resendRecoveryOtpBtn">Kirim Ulang Kode</button>
             </div>
           </form>
 
