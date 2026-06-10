@@ -311,6 +311,12 @@
     bottom: 40px;
   }
 
+  @media (max-width: 880px) {
+    .toast.show {
+      bottom: 90px;
+    }
+  }
+
   .toast--success {
     background-color: #2e1065;
   }

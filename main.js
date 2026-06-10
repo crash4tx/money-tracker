@@ -37,39 +37,14 @@ function getUserByEmail(email) {
   return users.find(u => u.email.toLowerCase() === email.toLowerCase());
 }
 
-function getCategories() {
-  let stored = readStoredJson(CATEGORIES_KEY, null);
-  
-  if (Array.isArray(stored)) {
-    let modified = false;
-    
-    // Fix missing types for legacy categories
-    stored.forEach(c => {
-      if (!c.type) {
-        c.type = "Pengeluaran";
-        modified = true;
-      }
-    });
+let categories = [];
 
-    const hasIncome = stored.some(c => c.type === "Pemasukan");
-    if (!hasIncome) {
-      // User is missing income categories (legacy storage), merge them in
-      const defaultIncomes = defaultCategories.filter(c => c.type === "Pemasukan");
-      stored = [...stored, ...defaultIncomes];
-      modified = true;
-    }
-    
-    if (modified) {
-      writeStoredJson(CATEGORIES_KEY, stored);
-    }
-    return stored;
-  }
-  
-  return defaultCategories;
+function getCategories() {
+  return categories.length > 0 ? categories : defaultCategories;
 }
 
 function saveCategories(cats) {
-  writeStoredJson(CATEGORIES_KEY, cats);
+  categories = cats;
 }
 const protectedPages = new Set(["dashboard", "transactions", "new-transaction", "settings", "expense-categories"]);
 const authPages = new Set(["login", "register"]);
@@ -176,6 +151,11 @@ function parseIndonesianDateLabel(label) {
 }
 
 function getTransactionTimestamp(item) {
+  if (item.date) {
+    const parsedTime = new Date(item.date).getTime();
+    if (!Number.isNaN(parsedTime)) return parsedTime;
+  }
+
   if (item.timestamp) {
     const parsedTime = new Date(item.timestamp).getTime();
     if (!Number.isNaN(parsedTime)) return parsedTime;
@@ -217,33 +197,26 @@ function sortTransactions(items) {
   return [...items].sort((a, b) => getTransactionTimestamp(b) - getTransactionTimestamp(a));
 }
 
-function getStoredTransactions() {
-  const savedTransactions = readStoredJson(TRANSACTIONS_KEY, null);
-  const sourceTransactions = Array.isArray(savedTransactions) ? savedTransactions : defaultTransactions;
-  
-  let hasChanges = false;
-  const processed = sourceTransactions.map((item) => {
-    const dateLabel = `${item.subtitle || ""}`.split(" - ").pop();
-    const parsedDate = parseIndonesianDateLabel(dateLabel);
-    if (!item.id || !item.timestamp) hasChanges = true;
-    
-    return {
-      ...item,
-      id: item.id || generateUUID(),
-      timestamp: item.timestamp || (parsedDate ? parsedDate.toISOString() : new Date().toISOString())
-    };
-  });
-
-  const sorted = sortTransactions(processed);
-  if (hasChanges && sourceTransactions.length > 0) {
-    writeStoredJson(TRANSACTIONS_KEY, sorted);
+async function getStoredTransactions() {
+  const session = getSession();
+  if (!session) return [];
+  const token = localStorage.getItem("luxentra_token");
+  try {
+    const res = await fetch("/api/transactions", {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+    if (!res.ok) throw new Error("Gagal mengambil data transaksi.");
+    return await res.json();
+  } catch (error) {
+    console.error(error);
+    return [];
   }
-  return sorted;
 }
 
 function saveTransactions(nextTransactions) {
-  transactions = sortTransactions(nextTransactions);
-  writeStoredJson(TRANSACTIONS_KEY, transactions);
+  transactions = nextTransactions;
 }
 
 function resetStoredTransactions() {
@@ -362,105 +335,75 @@ function initAuthForms() {
 
     if (page === "register") {
       const password = passwordInput?.value || "";
-      const hasUpperCase = /[A-Z]/.test(password);
-      const hasLetter = /[a-zA-Z]/.test(password);
-      const hasNumber = /\d/.test(password);
-
-      if (password.length < 8 || !hasUpperCase || !hasLetter || !hasNumber) {
-        showToast("Password harus memiliki minimal 8 karakter, mengandung huruf, angka, dan minimal 1 huruf besar.", "error");
-        return;
-      }
-      
       const emailValue = emailInput.value.trim();
-      const users = getStoredUsers();
-      if (users.some(u => u.email.toLowerCase() === emailValue.toLowerCase())) {
-        showToast("Email sudah terdaftar. Silakan login.", "error");
-        return;
-      }
-      
-      const role = emailValue.toLowerCase() === "admin@luxentra.app" ? "admin" : "user";
-      const newUser = {
-        id: generateUUID(),
-        name: textInput?.value.trim() || "Pengguna",
-        email: emailValue,
-        password: password,
-        createdAt: new Date().toISOString(),
-        status: "active",
-        role: role
-      };
-      
-      users.push(newUser);
-      saveUsers(users);
+      const nameValue = textInput?.value.trim() || "Pengguna";
 
-      createSession({
-        email: newUser.email,
-        name: newUser.name,
-        role: newUser.role,
-        createdAt: newUser.createdAt
+      fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nameValue, email: emailValue, password })
+      })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Pendaftaran gagal.");
+        
+        localStorage.setItem("luxentra_token", data.token);
+        createSession(data.user);
+        
+        if (data.user.role === "admin") {
+          redirectTo("admin-dashboard.html");
+        } else {
+          redirectTo("dashboard.html");
+        }
+      })
+      .catch((err) => {
+        showToast(err.message, "error");
       });
-      
-      if (role === "admin") {
-        redirectTo("admin-dashboard.html");
-      } else {
-        redirectTo("dashboard.html");
-      }
     } else if (page === "login") {
       const emailValue = emailInput.value.trim();
       const pwd = passwordInput?.value || "";
-      
-      let user = getUserByEmail(emailValue);
-      
-      // Auto-create for dev convenience if not found (optional, but requested for mock auth)
-      if (!user) {
-        const role = emailValue.toLowerCase() === "admin@luxentra.app" ? "admin" : "user";
-        user = {
-          id: generateUUID(),
-          name: emailValue.split("@")[0],
-          email: emailValue,
-          password: pwd,
-          createdAt: new Date().toISOString(),
-          status: "active",
-          role: role
-        };
-        const users = getStoredUsers();
-        users.push(user);
-        saveUsers(users);
-      }
-      
-      if (user.status === "blocked") {
-        showToast("Akun Anda telah dinonaktifkan oleh Admin.", "error");
-        return;
-      }
-      
-      if (user.password !== pwd) {
-        showToast("Email atau Password salah.", "error");
-        return;
-      }
-      
-      createSession({
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        createdAt: user.createdAt
+
+      fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailValue, password: pwd })
+      })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Login gagal.");
+        
+        localStorage.setItem("luxentra_token", data.token);
+        createSession(data.user);
+        
+        if (data.user.role === "admin") {
+          redirectTo("admin-dashboard.html");
+        } else {
+          redirectTo("dashboard.html");
+        }
+      })
+      .catch((err) => {
+        showToast(err.message, "error");
       });
-      
-      if (user.role === "admin") {
-        redirectTo("admin-dashboard.html");
-      } else {
-        redirectTo("dashboard.html");
-      }
     }
   });
 
   const googleButton = form.querySelector(".button--google");
   if (googleButton) {
-    googleButton.addEventListener("click", () => {
-      createSession({
-        name: "Pengguna Google",
-        email: "google.user@luxentra.app",
-        role: "user"
-      });
-      redirectTo("dashboard.html");
+    googleButton.addEventListener("click", async () => {
+      try {
+        const configRes = await fetch("/api/config");
+        if (!configRes.ok) throw new Error("Gagal mengambil konfigurasi Google Login.");
+        const config = await configRes.json();
+        
+        if (!config.supabaseUrl) {
+          throw new Error("Supabase URL belum dikonfigurasi di backend.");
+        }
+        
+        const redirectUrl = encodeURIComponent(window.location.origin + "/login.html?google_auth=success");
+        window.location.href = `${config.supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${redirectUrl}`;
+      } catch (err) {
+        showToast(err.message, "error");
+      }
     });
   }
 }
@@ -565,10 +508,22 @@ function initDeleteTransactionModal() {
   const urlParams = new URLSearchParams(window.location.search);
   const txId = urlParams.get("id");
 
-  const openModal = () => {
+  const openModal = async () => {
     if (txId) {
-      const nextTransactions = transactions.filter(t => t.id !== txId);
-      saveTransactions(nextTransactions);
+      try {
+        const token = localStorage.getItem("luxentra_token");
+        const res = await fetch(`/api/transactions/${txId}`, {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (!res.ok) throw new Error("Gagal menghapus transaksi.");
+        showToast("Transaksi berhasil dihapus.");
+      } catch (err) {
+        showToast(err.message, "error");
+        return;
+      }
     }
     
     modal.hidden = false;
@@ -1165,7 +1120,7 @@ function initEditProfileForm(session) {
       }
     };
     phoneInput.addEventListener("input", () => {
-      isPhoneVerified = false; // Reset verification on edit
+      isPhoneVerified = false;
       if (otpContainer) otpContainer.style.display = "none";
       toggleVerifyBtn();
     });
@@ -1176,7 +1131,7 @@ function initEditProfileForm(session) {
         showToast(`Kode OTP telah dikirim ke nomor ${phoneInput.value.trim()}`);
         if (otpContainer) {
           otpContainer.style.display = "grid";
-          if (otpInput) otpInput.value = ""; // Clear previous OTP
+          if (otpInput) otpInput.value = "";
         }
       }
     });
@@ -1188,8 +1143,6 @@ function initEditProfileForm(session) {
           otpContainer.style.display = "none";
           isPhoneVerified = true;
           toggleVerifyBtn();
-          
-          // Save immediately upon successful verification
           session.phone = phoneInput.value.trim();
           writeStoredSession(JSON.stringify(session));
         } else {
@@ -1200,29 +1153,51 @@ function initEditProfileForm(session) {
   }
 
   if (saveButton && nameInput && emailInput) {
-    saveButton.addEventListener("click", () => {
+    saveButton.addEventListener("click", async () => {
       const newName = nameInput.value.trim();
-      const newEmail = emailInput.value.trim();
       const newPhone = phoneInput ? phoneInput.value.trim() : "";
 
-      if (!newName || !newEmail) {
-        window.alert("Nama dan Email tidak boleh kosong.");
+      if (!newName) {
+        showToast("Nama tidak boleh kosong.", "error");
         return;
       }
 
       if (newPhone && newPhone !== session.phone && !isPhoneVerified) {
-        window.alert("Silakan verifikasi nomor telepon baru Anda terlebih dahulu sebelum menyimpan.");
+        showToast("Silakan verifikasi nomor telepon baru Anda terlebih dahulu.", "error");
         return;
       }
 
-      session.name = newName;
-      session.email = newEmail;
-      if (newPhone !== undefined) {
-        session.phone = newPhone;
+      // Simpan ke server via API
+      const token = localStorage.getItem("luxentra_token");
+      try {
+        saveButton.disabled = true;
+        saveButton.textContent = "Menyimpan...";
+
+        const res = await fetch("/api/auth/profile", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ name: newName, phone: newPhone })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Gagal memperbarui profil.");
+
+        // Update session lokal
+        session.name = data.name;
+        if (newPhone !== undefined) session.phone = newPhone;
+        writeStoredSession(JSON.stringify(session));
+
+        showToast("Profil berhasil diperbarui!");
+        setTimeout(() => redirectTo("settings.html"), 1200);
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        saveButton.disabled = false;
+        saveButton.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Simpan Perubahan`;
       }
-      
-      writeStoredSession(JSON.stringify(session));
-      redirectTo("settings.html");
     });
   }
 }
@@ -1293,21 +1268,24 @@ function initNewTransactionForm() {
       return;
     }
 
-    const formattedDate = formatLongDate(dateValue);
-    const transaction = {
-      id: generateUUID(),
-      title: buildTransactionTitle({ type, category, note, dateLabel: formattedDate }),
-      subtitle: `${category} - ${formattedDate}`,
-      amount: type === "Pengeluaran" ? -amount : amount,
-      type,
-      category,
-      note,
-      date: dateValue,
-      timestamp: new Date(`${dateValue}T12:00:00`).toISOString()
-    };
-
-    saveTransactions([transaction, ...transactions]);
-    redirectTo("dashboard.html");
+    const token = localStorage.getItem("luxentra_token");
+    fetch("/api/transactions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ amount, type, category, note, date: dateValue })
+    })
+    .then(async (res) => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menyimpan transaksi.");
+      showToast("Transaksi berhasil disimpan.");
+      redirectTo("dashboard.html");
+    })
+    .catch((err) => {
+      window.alert(err.message);
+    });
   });
 }
 
@@ -1339,26 +1317,61 @@ function showImageModal(imageUrl) {
 
 function initProfilePhotoPicker(session) {
   const button = document.querySelector(".profile-card__copy .button--outline");
+  const smallCamBtn = document.querySelector(".profile-card > div > button");
   const avatar = document.querySelector(".profile-avatar");
-  if (!button || !avatar) return;
+  if (!avatar) return;
 
-  const savedAvatar = readStoredJson(PROFILE_AVATAR_KEY, "");
-  if (savedAvatar) {
-    avatar.textContent = "";
-    avatar.style.background = `center / cover no-repeat url(${savedAvatar})`;
-  } else if (session?.name) {
-    avatar.textContent = session.name.charAt(0).toUpperCase();
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+  const token = localStorage.getItem("luxentra_token");
+
+  // Muat avatar dari server
+  async function loadAvatarFromServer() {
+    if (!token) return;
+    try {
+      const res = await fetch("/api/auth/avatar", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.avatar_url) {
+          applyAvatarToUI(data.avatar_url, session);
+          writeStoredJson(PROFILE_AVATAR_KEY, data.avatar_url);
+          return;
+        }
+      }
+    } catch (err) {
+      console.error("Gagal memuat avatar:", err);
+    }
+    // Fallback ke localStorage
+    const saved = readStoredJson(PROFILE_AVATAR_KEY, "");
+    if (saved) {
+      applyAvatarToUI(saved, session);
+    } else if (session?.name) {
+      avatar.textContent = session.name.charAt(0).toUpperCase();
+    }
   }
+
+  function applyAvatarToUI(imageUrl, sess) {
+    avatar.textContent = "";
+    avatar.style.backgroundImage = `url(${imageUrl})`;
+    avatar.style.backgroundSize = "cover";
+    avatar.style.backgroundPosition = "center";
+  }
+
+  loadAvatarFromServer();
 
   const fileInput = document.createElement("input");
   fileInput.type = "file";
-  fileInput.accept = "image/*";
+  fileInput.accept = "image/jpeg,image/png,image/webp";
   fileInput.hidden = true;
   document.body.append(fileInput);
 
-  button.addEventListener("click", () => {
+  function triggerFilePicker() {
     fileInput.click();
-  });
+  }
+
+  if (button) button.addEventListener("click", triggerFilePicker);
+  if (smallCamBtn) smallCamBtn.addEventListener("click", triggerFilePicker);
 
   avatar.style.cursor = "pointer";
   avatar.addEventListener("click", () => {
@@ -1368,17 +1381,61 @@ function initProfilePhotoPicker(session) {
     }
   });
 
-  fileInput.addEventListener("change", () => {
+  fileInput.addEventListener("change", async () => {
     const [file] = fileInput.files || [];
     if (!file) return;
 
+    // Validasi ukuran file (client-side)
+    if (file.size > MAX_FILE_SIZE) {
+      showToast("Ukuran foto melebihi 2MB. Pilih foto yang lebih kecil.", "error");
+      fileInput.value = "";
+      return;
+    }
+
+    // Validasi tipe file
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      showToast("Format foto tidak didukung. Gunakan JPG, PNG, atau WebP.", "error");
+      fileInput.value = "";
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const imageUrl = typeof reader.result === "string" ? reader.result : "";
       if (!imageUrl) return;
-      avatar.textContent = "";
-      avatar.style.background = `center / cover no-repeat url(${imageUrl})`;
-      writeStoredJson(PROFILE_AVATAR_KEY, imageUrl);
+
+      // Tampilkan preview dulu
+      applyAvatarToUI(imageUrl, session);
+      showToast("Mengupload foto...");
+
+      // Upload ke server
+      try {
+        const res = await fetch("/api/auth/upload-avatar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ avatarBase64: imageUrl, mimeType: file.type })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Upload gagal.");
+
+        writeStoredJson(PROFILE_AVATAR_KEY, imageUrl);
+        showToast("Foto profil berhasil diperbarui!");
+      } catch (err) {
+        showToast(err.message, "error");
+        // Rollback preview jika gagal
+        const prevAvatar = readStoredJson(PROFILE_AVATAR_KEY, "");
+        if (prevAvatar) {
+          applyAvatarToUI(prevAvatar, session);
+        } else {
+          avatar.style.backgroundImage = "";
+          if (session?.name) avatar.textContent = session.name.charAt(0).toUpperCase();
+        }
+      }
     };
     reader.readAsDataURL(file);
   });
@@ -1502,14 +1559,75 @@ function initMenu() {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+async function handleGoogleAuthCallback() {
+  const query = window.location.search;
+  const hash = window.location.hash;
+  
+  if (query.includes("google_auth=success") && hash) {
+    const hashParams = new URLSearchParams(hash.substring(1));
+    const accessToken = hashParams.get("access_token");
+    const errorDescription = hashParams.get("error_description");
+    
+    if (errorDescription) {
+      showToast(decodeURIComponent(errorDescription), "error");
+      window.history.replaceState(null, null, window.location.pathname + query);
+      return;
+    }
+    
+    if (accessToken) {
+      showToast("Memverifikasi akun Google...");
+      try {
+        const res = await fetch("/api/auth/google-success", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ supabaseToken: accessToken })
+        });
+        
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Gagal masuk menggunakan Google.");
+        
+        localStorage.setItem("luxentra_token", data.token);
+        createSession(data.user);
+        
+        showToast("Berhasil login dengan Google!");
+        window.history.replaceState(null, null, window.location.pathname);
+        setTimeout(() => redirectTo("dashboard.html"), 500);
+      } catch (err) {
+        showToast(err.message, "error");
+        window.history.replaceState(null, null, window.location.pathname + query);
+      }
+    }
+  }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await handleGoogleAuthCallback();
+
   const page = getCurrentPage();
   const session = initSessionRouting();
   if (page && !session && protectedPages.has(page)) {
     return;
   }
 
-  transactions = getStoredTransactions();
+  // Load backend data asynchronously if session is active
+  if (session) {
+    const token = localStorage.getItem("luxentra_token");
+    try {
+      const [txData, catData] = await Promise.all([
+        getStoredTransactions(),
+        fetch("/api/categories", {
+          headers: { "Authorization": `Bearer ${token}` }
+        }).then(r => r.ok ? r.json() : [])
+      ]);
+      transactions = txData;
+      categories = catData;
+    } catch (err) {
+      console.error("Gagal memuat data dari server:", err);
+      transactions = [];
+      categories = [];
+    }
+  }
+
   initAuthForms();
   initRecoveryForms();
   initLogout();
@@ -1533,10 +1651,102 @@ document.addEventListener("DOMContentLoaded", () => {
   updateTransactionsStats();
   renderRecentTransactions();
   initTransactionFilters();
+  initEditTransactionModal();
   initBroadcast(session);
 });
 
-function initBroadcast(session) {
+function initEditTransactionModal() {
+  const editBtn = document.getElementById("editTransactionButton");
+  const modal = document.getElementById("editTransactionModal");
+  const cancelBtn = document.getElementById("btnCancelEditTx");
+  const form = document.getElementById("editTransactionForm");
+  if (!editBtn || !modal || !form) return;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const txId = urlParams.get("id");
+  if (!txId) return;
+
+  const tx = transactions.find(t => t.id === txId);
+
+  const typeSelect = document.getElementById("editTxType");
+  const categorySelect = document.getElementById("editTxCategory");
+  const amountInput = document.getElementById("editTxAmount");
+  const dateInput = document.getElementById("editTxDate");
+  const noteInput = document.getElementById("editTxNote");
+
+  function populateEditCategories(type) {
+    categorySelect.innerHTML = "";
+    const cats = getCategories().filter(c => c.type === type || c.type === "Lainnya");
+    cats.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c.label;
+      opt.textContent = c.label;
+      categorySelect.appendChild(opt);
+    });
+  }
+
+  typeSelect.addEventListener("change", () => {
+    populateEditCategories(typeSelect.value);
+  });
+
+  editBtn.addEventListener("click", () => {
+    if (!tx) { showToast("Data transaksi tidak ditemukan.", "error"); return; }
+    // Pre-fill form
+    typeSelect.value = tx.type || "Pengeluaran";
+    populateEditCategories(typeSelect.value);
+    categorySelect.value = tx.category || "";
+    amountInput.value = Math.abs(tx.amount).toLocaleString("id-ID");
+    dateInput.value = tx.date || new Date().toISOString().split("T")[0];
+    noteInput.value = tx.note || "";
+    modal.hidden = false;
+  });
+
+  cancelBtn.addEventListener("click", () => { modal.hidden = true; });
+  modal.addEventListener("click", (e) => { if (e.target === modal) modal.hidden = true; });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const type = typeSelect.value;
+    const category = categorySelect.value;
+    const amount = parseCurrencyInput(amountInput.value);
+    const date = dateInput.value;
+    const note = noteInput.value.trim();
+
+    if (!type || !category || !amount || !date) {
+      showToast("Lengkapi semua field wajib.", "error");
+      return;
+    }
+
+    const saveBtn = document.getElementById("btnSaveEditTx");
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Menyimpan...";
+
+    try {
+      const token = localStorage.getItem("luxentra_token");
+      const res = await fetch(`/api/transactions/${txId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ amount, type, category, note, date })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal memperbarui transaksi.");
+
+      showToast("Transaksi berhasil diperbarui!");
+      modal.hidden = true;
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err) {
+      showToast(err.message, "error");
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Simpan Perubahan";
+    }
+  });
+}
+
+async function initBroadcast(session) {
   const banner = document.getElementById("broadcastBanner");
   const textEl = document.getElementById("broadcastBannerText");
   const closeBtn = document.getElementById("closeBroadcastBtn");
@@ -1544,17 +1754,17 @@ function initBroadcast(session) {
 
   const activeSession = session || getSession();
 
-  const BROADCAST_HISTORY_KEY = "luxentra_broadcast_history";
-  // Gunakan riwayat untuk menampilkan semua pesan yang belum ditutup
-  const history = readStoredJson(BROADCAST_HISTORY_KEY, []);
-  
-  // Jika admin belum pernah mengirim pengumuman sama sekali
-  if (history.length === 0) {
-    // Fallback ke sistem lama (untuk kompatibilitas)
-    const oldBroadcast = readStoredJson(BROADCAST_KEY, null);
-    if (oldBroadcast) history.push(oldBroadcast);
-    else return;
+  let history = [];
+  try {
+    const res = await fetch("/api/broadcasts");
+    if (res.ok) {
+      history = await res.json();
+    }
+  } catch (err) {
+    console.error("Gagal mengambil data broadcast:", err);
   }
+
+  if (history.length === 0) return;
 
   let currentBroadcast = null;
 
