@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "build:css": "npx @tailwindcss/cli -i ./input.css -o ./styles.css",
+    "build": "npx @tailwindcss/cli -i ./input.css -o ./styles.css",
     "watch:css": "npx @tailwindcss/cli -i ./input.css -o ./styles.css --watch"
   },
   "devDependencies": {
