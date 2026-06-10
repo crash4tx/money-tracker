@@ -1053,26 +1053,131 @@ function initRecoveryForms() {
   if (!form) return;
 
   if (page === "forgot-password") {
-    form.addEventListener("submit", (event) => {
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const emailInput = form.querySelector('input[type="email"]');
-      writeStoredJson(RECOVERY_EMAIL_KEY, { email: emailInput?.value?.trim() || "" });
-      redirectTo("verify-email.html");
+      const email = emailInput?.value?.trim() || "";
+      if (!email) {
+        showToast("Mohon masukkan email Anda terlebih dahulu.", "error");
+        return;
+      }
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Mengirim...";
+
+      try {
+        const res = await fetch("/api/auth/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+        
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Gagal memproses permintaan reset password.");
+
+        showToast(data.message || "Kode verifikasi telah dikirim ke email Anda.");
+        writeStoredJson(RECOVERY_EMAIL_KEY, { email });
+        
+        setTimeout(() => redirectTo("verify-email.html"), 1200);
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Verifikasi Email Anda";
+      }
     });
   }
 
   if (page === "verify-email") {
-    const resendButton = form.querySelector('.button[type="button"]');
+    const resendButton = document.getElementById("resendRecoveryOtpBtn");
+    const otpInput = document.getElementById("recoveryOtpInput");
+    const newPasswordInput = document.getElementById("recoveryNewPasswordInput");
+    const confirmPasswordInput = document.getElementById("recoveryConfirmPasswordInput");
 
-    form.addEventListener("submit", (event) => {
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      removeStoredValue(RECOVERY_EMAIL_KEY);
-      redirectTo("login.html");
+
+      const savedData = readStoredJson(RECOVERY_EMAIL_KEY, null);
+      const email = savedData?.email;
+
+      if (!email) {
+        showToast("Email pemulihan tidak ditemukan. Silakan isi ulang form lupa password.", "error");
+        setTimeout(() => redirectTo("forgot-password.html"), 1500);
+        return;
+      }
+
+      const otp = otpInput?.value?.trim();
+      const newPassword = newPasswordInput?.value;
+      const confirmPassword = confirmPasswordInput?.value;
+
+      if (!otp || !newPassword || !confirmPassword) {
+        showToast("Mohon lengkapi semua kolom terlebih dahulu.", "error");
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        showToast("Password baru dan konfirmasi password tidak cocok.", "error");
+        return;
+      }
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Memverifikasi...";
+
+      try {
+        const res = await fetch("/api/auth/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, otp, newPassword })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Gagal menyetel ulang password.");
+
+        showToast("Password berhasil disetel ulang! Silakan login kembali.");
+        removeStoredValue(RECOVERY_EMAIL_KEY);
+        
+        setTimeout(() => redirectTo("login.html"), 1500);
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Verifikasi & Ubah Password";
+      }
     });
 
     if (resendButton) {
-      resendButton.addEventListener("click", () => {
-        window.alert("Kode verifikasi baru telah dikirim ke email Anda.");
+      resendButton.addEventListener("click", async () => {
+        const savedData = readStoredJson(RECOVERY_EMAIL_KEY, null);
+        const email = savedData?.email;
+
+        if (!email) {
+          showToast("Email tidak ditemukan. Silakan isi kembali email Anda.", "error");
+          redirectTo("forgot-password.html");
+          return;
+        }
+
+        resendButton.disabled = true;
+        resendButton.textContent = "Mengirim...";
+
+        try {
+          const res = await fetch("/api/auth/forgot-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+          });
+
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Gagal mengirim ulang OTP.");
+
+          showToast(data.message || "Kode OTP pemulihan baru telah dikirim.");
+        } catch (err) {
+          showToast(err.message, "error");
+        } finally {
+          resendButton.disabled = false;
+          resendButton.textContent = "Kirim Ulang Kode";
+        }
       });
     }
   }
@@ -1103,7 +1208,8 @@ function initEditProfileForm(session) {
   const confirmOtpBtn = document.getElementById("confirmOtpBtn");
   const otpInput = document.getElementById("otpInput");
 
-  let isPhoneVerified = false;
+  const token = localStorage.getItem("luxentra_token");
+  let isPhoneVerified = phoneInput ? (phoneInput.value.trim() === (session.phone || "") && !!session.phone) : false;
 
   if (phoneInput && verifyPhoneBtn) {
     const toggleVerifyBtn = () => {
@@ -1119,34 +1225,92 @@ function initEditProfileForm(session) {
         verifyPhoneBtn.style.background = "";
       }
     };
+
     phoneInput.addEventListener("input", () => {
-      isPhoneVerified = false;
+      if (phoneInput.value.trim() === (session.phone || "")) {
+        isPhoneVerified = !!session.phone;
+      } else {
+        isPhoneVerified = false;
+      }
       if (otpContainer) otpContainer.style.display = "none";
       toggleVerifyBtn();
     });
     toggleVerifyBtn();
 
-    verifyPhoneBtn.addEventListener("click", () => {
-      if (phoneInput.value.trim()) {
-        showToast(`Kode OTP telah dikirim ke nomor ${phoneInput.value.trim()}`);
+    verifyPhoneBtn.addEventListener("click", async () => {
+      const phone = phoneInput.value.trim();
+      if (!phone) return;
+
+      verifyPhoneBtn.disabled = true;
+      verifyPhoneBtn.textContent = "Mengirim...";
+
+      try {
+        const res = await fetch("/api/auth/send-phone-otp", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ phone })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Gagal mengirim kode OTP.");
+
+        showToast(data.message || "Kode OTP telah dikirim ke email Anda.");
         if (otpContainer) {
           otpContainer.style.display = "grid";
-          if (otpInput) otpInput.value = "";
+          if (otpInput) {
+            otpInput.value = "";
+            otpInput.focus();
+          }
         }
+      } catch (err) {
+        showToast(err.message, "error");
+      } finally {
+        toggleVerifyBtn();
       }
     });
 
     if (confirmOtpBtn && otpInput) {
-      confirmOtpBtn.addEventListener("click", () => {
-        if (otpInput.value.trim().length >= 4) {
-          showToast("Nomor telepon berhasil diverifikasi!");
+      confirmOtpBtn.addEventListener("click", async () => {
+        const phone = phoneInput.value.trim();
+        const otp = otpInput.value.trim();
+
+        if (!otp) {
+          showToast("Mohon masukkan kode OTP.", "error");
+          return;
+        }
+
+        confirmOtpBtn.disabled = true;
+        confirmOtpBtn.textContent = "Memverifikasi...";
+
+        try {
+          const res = await fetch("/api/auth/verify-phone-otp", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ phone, otp })
+          });
+
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Gagal memverifikasi OTP.");
+
+          showToast(data.message || "Nomor telepon berhasil diverifikasi!");
           otpContainer.style.display = "none";
           isPhoneVerified = true;
           toggleVerifyBtn();
-          session.phone = phoneInput.value.trim();
+
+          // Update local session immediately
+          session.phone = phone;
           writeStoredSession(JSON.stringify(session));
-        } else {
-          showToast("Kode OTP tidak valid", "error");
+        } catch (err) {
+          showToast(err.message, "error");
+        } finally {
+          confirmOtpBtn.disabled = false;
+          confirmOtpBtn.textContent = "Konfirmasi";
         }
       });
     }
@@ -1168,7 +1332,6 @@ function initEditProfileForm(session) {
       }
 
       // Simpan ke server via API
-      const token = localStorage.getItem("luxentra_token");
       try {
         saveButton.disabled = true;
         saveButton.textContent = "Menyimpan...";
@@ -1655,6 +1818,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   initBroadcast(session);
 });
 
+function syncCustomSelect(select) {
+  const wrapper = select.nextElementSibling;
+  if (!wrapper || !wrapper.classList.contains("custom-select")) return;
+  
+  const triggerText = wrapper.querySelector(".custom-select__content span:last-child");
+  if (triggerText) {
+    triggerText.textContent = select.options[select.selectedIndex]?.text || "";
+  }
+  
+  const optionsContainer = wrapper.querySelector(".custom-select__options");
+  if (optionsContainer) {
+    const optionDivs = optionsContainer.children;
+    const activeOptions = Array.from(select.options).filter(opt => !opt.disabled);
+    activeOptions.forEach((option, idx) => {
+      const optDiv = optionDivs[idx];
+      if (optDiv) {
+        optDiv.classList.toggle("selected", option.selected);
+      }
+    });
+  }
+}
+
 function initEditTransactionModal() {
   const editBtn = document.getElementById("editTransactionButton");
   const modal = document.getElementById("editTransactionModal");
@@ -1683,6 +1868,12 @@ function initEditTransactionModal() {
       opt.textContent = c.label;
       categorySelect.appendChild(opt);
     });
+
+    if (categorySelect.nextElementSibling && categorySelect.nextElementSibling.classList.contains("custom-select")) {
+      categorySelect.nextElementSibling.remove();
+    }
+    categorySelect.style.display = "";
+    initCustomSelects();
   }
 
   typeSelect.addEventListener("change", () => {
@@ -1693,8 +1884,13 @@ function initEditTransactionModal() {
     if (!tx) { showToast("Data transaksi tidak ditemukan.", "error"); return; }
     // Pre-fill form
     typeSelect.value = tx.type || "Pengeluaran";
+    syncCustomSelect(typeSelect);
+
     populateEditCategories(typeSelect.value);
+
     categorySelect.value = tx.category || "";
+    syncCustomSelect(categorySelect);
+
     amountInput.value = Math.abs(tx.amount).toLocaleString("id-ID");
     dateInput.value = tx.date || new Date().toISOString().split("T")[0];
     noteInput.value = tx.note || "";
@@ -1774,16 +1970,6 @@ async function initBroadcast(session) {
       // 1. Cek apakah pesan sudah ditutup
       const isDismissed = readStoredJson(`luxentra_dismissed_${b.id}`, false);
       if (isDismissed) return false;
-      
-      // 2. Cek apakah user mendaftar SETELAH pengumuman dibuat
-      if (activeSession && activeSession.createdAt && b.timestamp) {
-        const userCreated = new Date(activeSession.createdAt).getTime();
-        const broadcastCreated = new Date(b.timestamp).getTime();
-        // Jika user dibuat setelah broadcast dikirim, lewati broadcast ini
-        if (userCreated > broadcastCreated) {
-          return false;
-        }
-      }
 
       return true;
     });
