@@ -741,14 +741,29 @@ function getCompareSeries() {
   }));
 }
 
-function getDonutSeries() {
-  const totalExpense = transactions.reduce((total, item) => {
+function getLatestMonthExpenses() {
+  const expenses = transactions.filter(t => t.amount < 0);
+  if (expenses.length === 0) return [];
+
+  const latestExpense = expenses[0]; // transactions are sorted descending
+  const latestDate = new Date(getTransactionTimestamp(latestExpense));
+  const latestMonth = latestDate.getMonth();
+  const latestYear = latestDate.getFullYear();
+
+  return expenses.filter(t => {
+    const d = new Date(getTransactionTimestamp(t));
+    return d.getMonth() === latestMonth && d.getFullYear() === latestYear;
+  });
+}
+
+function getDonutSeries(items = transactions) {
+  const totalExpense = items.reduce((total, item) => {
     return item.amount < 0 ? total + Math.abs(item.amount) : total;
   }, 0);
 
   return getCategories()
     .map((item) => {
-      const amount = transactions.reduce((total, transaction) => {
+      const amount = items.reduce((total, transaction) => {
         if (transaction.amount >= 0 || transaction.category !== item.label) return total;
         return total + Math.abs(transaction.amount);
       }, 0);
@@ -926,8 +941,8 @@ function renderBarChart() {
   `;
 }
 
-function getDonutGradient() {
-  const donutSeries = getDonutSeries();
+function getDonutGradient(series) {
+  const donutSeries = series || getDonutSeries();
   const gradient = donutSeries
     .map((item, index) => {
       const start = donutSeries.slice(0, index).reduce((sum, current) => sum + current.value, 0);
@@ -943,7 +958,8 @@ function renderDonut() {
   const legend = document.getElementById("donutLegend");
   if (!chart || !legend) return;
 
-  const donutSeries = getDonutSeries();
+  const filtered = getLatestMonthExpenses();
+  const donutSeries = getDonutSeries(filtered);
 
   if (!donutSeries.length) {
     chart.style.background = "conic-gradient(#e5e7eb 0% 100%)";
@@ -951,7 +967,7 @@ function renderDonut() {
     return;
   }
 
-  chart.style.background = getDonutGradient();
+  chart.style.background = getDonutGradient(donutSeries);
   legend.innerHTML = donutSeries
     .map(
       (item) => `
@@ -971,11 +987,13 @@ function renderExpenseCategoryDetailPage() {
 
   const monthNode = document.getElementById("expenseDetailMonth");
   const totalNode = document.getElementById("expenseDetailTotal");
-  const orderedItems = getDonutSeries();
+  const filtered = getLatestMonthExpenses();
+  const orderedItems = getDonutSeries(filtered);
   const totalExpense = orderedItems.reduce((total, item) => total + item.amount, 0);
 
   if (monthNode) {
-    const latestDate = transactions.length ? new Date(getTransactionTimestamp(transactions[0])) : new Date();
+    const expenses = transactions.filter(t => t.amount < 0);
+    const latestDate = expenses.length ? new Date(getTransactionTimestamp(expenses[0])) : new Date();
     monthNode.textContent = `${monthNames[latestDate.getMonth()]} ${latestDate.getFullYear()}`;
   }
 
@@ -989,13 +1007,13 @@ function renderExpenseCategoryDetailPage() {
     return;
   }
 
-  chart.style.background = getDonutGradient();
+  chart.style.background = getDonutGradient(orderedItems);
   list.innerHTML = orderedItems
     .map(
       (item) => `
         <article class="expense-category-item">
           <div class="expense-category-item__main">
-            <span class="expense-category-item__icon" style="background:${item.color}">${item.iconLabel}</span>
+            <span class="expense-category-item__icon" style="background:${item.color}">${item.icon_label || item.iconLabel || "LN"}</span>
             <div>
               <h3>${item.label}</h3>
               <p>${item.value}% Dari Total</p>
