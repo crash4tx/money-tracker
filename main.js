@@ -51,6 +51,7 @@ const authPages = new Set(["login", "register"]);
 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 let activeAreaVariant = "expense";
 let transactions = [];
+let selectedExpenseMonthKey = null;
 
 function getCurrentPage() {
   return document.body?.dataset.page || "";
@@ -987,14 +988,81 @@ function renderExpenseCategoryDetailPage() {
 
   const monthNode = document.getElementById("expenseDetailMonth");
   const totalNode = document.getElementById("expenseDetailTotal");
-  const filtered = getLatestMonthExpenses();
+  const select = document.getElementById("monthFilter");
+
+  const expenses = transactions.filter(t => t.amount < 0);
+
+  // Get all unique month keys for dropdown
+  const monthMap = new Map(); // key -> Label (e.g. "2026-5" -> "Juni 2026")
+  expenses.forEach(t => {
+    const d = new Date(getTransactionTimestamp(t));
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    const label = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+    monthMap.set(key, label);
+  });
+
+  // Set default selected month if not set or invalid
+  if (expenses.length > 0) {
+    const latestDate = new Date(getTransactionTimestamp(expenses[0]));
+    const latestKey = `${latestDate.getFullYear()}-${latestDate.getMonth()}`;
+    if (!selectedExpenseMonthKey || !monthMap.has(selectedExpenseMonthKey)) {
+      selectedExpenseMonthKey = latestKey;
+    }
+  }
+
+  // Populate monthFilter select dropdown
+  if (select) {
+    select.innerHTML = "";
+    if (expenses.length === 0) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "Tidak ada transaksi";
+      select.appendChild(option);
+    } else {
+      monthMap.forEach((label, key) => {
+        const option = document.createElement("option");
+        option.value = key;
+        option.textContent = label;
+        if (key === selectedExpenseMonthKey) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+    }
+
+    // Bind event listener only once
+    if (!select.dataset.listenerAdded) {
+      select.addEventListener("change", (e) => {
+        selectedExpenseMonthKey = e.target.value;
+        renderExpenseCategoryDetailPage();
+      });
+      select.dataset.listenerAdded = "true";
+    }
+
+    // Refresh custom-select UI wrapper
+    if (select.nextElementSibling && select.nextElementSibling.classList.contains("custom-select")) {
+      select.nextElementSibling.remove();
+    }
+    initCustomSelects();
+  }
+
+  // Filter transactions by the selected month key
+  const filtered = expenses.filter(t => {
+    const d = new Date(getTransactionTimestamp(t));
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    return key === selectedExpenseMonthKey;
+  });
+
   const orderedItems = getDonutSeries(filtered);
   const totalExpense = orderedItems.reduce((total, item) => total + item.amount, 0);
 
   if (monthNode) {
-    const expenses = transactions.filter(t => t.amount < 0);
-    const latestDate = expenses.length ? new Date(getTransactionTimestamp(expenses[0])) : new Date();
-    monthNode.textContent = `${monthNames[latestDate.getMonth()]} ${latestDate.getFullYear()}`;
+    if (selectedExpenseMonthKey && monthMap.has(selectedExpenseMonthKey)) {
+      monthNode.textContent = monthMap.get(selectedExpenseMonthKey);
+    } else {
+      const latestDate = new Date();
+      monthNode.textContent = `${monthNames[latestDate.getMonth()]} ${latestDate.getFullYear()}`;
+    }
   }
 
   if (totalNode) {
@@ -1003,7 +1071,7 @@ function renderExpenseCategoryDetailPage() {
 
   if (!orderedItems.length) {
     chart.style.background = "conic-gradient(#e5e7eb 0% 100%)";
-    list.innerHTML = '<p class="empty-state">Belum ada pengeluaran yang tercatat, jadi detail kategori masih kosong.</p>';
+    list.innerHTML = '<p class="empty-state">Belum ada pengeluaran yang tercatat untuk bulan ini.</p>';
     return;
   }
 
