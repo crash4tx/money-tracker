@@ -799,7 +799,8 @@ function renderAreaChart(variant = activeAreaVariant) {
 
   const points = series.map((point, index) => {
     const x = padding + (usableWidth / (series.length - 1)) * index;
-    const y = height - padding - (point.value / maxValue) * usableHeight;
+    const ratio = point.value === 0 ? 0 : 0.06 + 0.94 * (point.value / maxValue);
+    const y = height - padding - ratio * usableHeight;
     return { ...point, x, y };
   });
 
@@ -850,10 +851,6 @@ function initAreaChartInteraction() {
   panel.setAttribute("tabindex", "0");
   panel.setAttribute("role", "button");
 
-  const isTouchDevice = () => {
-    return !window.matchMedia("(hover: hover)").matches;
-  };
-
   // Mobile/Touch toggle function
   const toggleChart = () => {
     if (activeAreaVariant === "expense") {
@@ -863,24 +860,9 @@ function initAreaChartInteraction() {
     }
   };
 
-  // Hover handlers for cursor devices (desktop)
-  panel.addEventListener("pointerenter", (e) => {
-    if (e.pointerType === "mouse") {
-      setAreaChartVariant("income");
-    }
-  });
-
-  panel.addEventListener("pointerleave", (e) => {
-    if (e.pointerType === "mouse") {
-      setAreaChartVariant("expense");
-    }
-  });
-
-  // Click handler (functions as toggle on mobile/touch, or keyboard for accessibility)
-  panel.addEventListener("click", (e) => {
-    if (e.pointerType !== "mouse") {
-      toggleChart();
-    }
+  // Click handler (functions as toggle on all devices)
+  panel.addEventListener("click", () => {
+    toggleChart();
   });
 
   panel.addEventListener("keydown", (e) => {
@@ -892,14 +874,9 @@ function initAreaChartInteraction() {
 
   // Set initial aria-label dynamically
   const updateAriaLabel = () => {
-    if (window.matchMedia("(hover: none)").matches) {
-      panel.setAttribute("aria-label", "Tekan untuk mengganti grafik antara Pemasukan dan Pengeluaran");
-    } else {
-      panel.setAttribute("aria-label", "Arahkan kursor ke panel untuk melihat Pemasukan");
-    }
+    panel.setAttribute("aria-label", "Klik untuk mengganti grafik antara Pemasukan dan Pengeluaran");
   };
   updateAriaLabel();
-  window.addEventListener("resize", updateAriaLabel);
 }
 
 function renderBarChart() {
